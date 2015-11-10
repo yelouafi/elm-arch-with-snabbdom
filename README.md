@@ -17,6 +17,8 @@ Elm architecture examples with JavaScript/JSX using
 
 ##Examples
 
-The repository contains multiple branches with different examples
+The repository contains multiple different examples
 
-- [master](https://github.com/yelouafi/elm-arch-with-snabbdom) : A simple increment/decrement counter
+- Counter: a simple increment/decrement counter
+- Login: Demonstrates Asynchronous Actions in a single component
+- Admin: Demonstrates Asynchronous Actions in nested component hierarchies

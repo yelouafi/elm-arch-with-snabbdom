@@ -21,7 +21,7 @@ export function getUsers() {
 export function login({name, password}) {
   const user = users.find(user => user.name === name && user.password === password);
   return user  ?
-      Result.Success(user)
+      Result.Success({name, admin: user.admin})
     : Result.Error('Invalid username/password');
 }
 
@@ -30,7 +30,7 @@ export function addUser({name, password}) {
     const newUser = {id: nextId, name, password};
     users.push(newUser);
     nextId++;
-    return Result.Success(`${newUser.id}`);
+    return Result.Success({id: newUser.id});
   } else {
     return Result.Error('Duplicate user');
   }
@@ -44,7 +44,7 @@ export function updateUser(user) {
     return Result.Error('Duplicate user name');
   else {
     users[idx] = user;
-    return Result.Success(`${user.id}`);
+    return Result.Success({});
   }
 }
 

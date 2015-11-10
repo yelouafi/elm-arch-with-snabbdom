@@ -1,0 +1,111 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-size: 14px;
+}
+
+input {
+  height: 3em;
+  border-radius: 0.2em;
+  border: 1px solid #ccc;
+  padding: 0 0.5em;
+  outline: none;
+}
+
+input:active, input:focus {
+  border-color: #66afe9;
+  outline: 0;
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 8px rgba(102,175,233,.6);
+}
+
+button {
+  height: 3em;
+  border-radius: 0.2em;
+  border: 1px solid #46b8da;
+  color: #2a88bd;
+  background-color: transparent;
+  border-color: #2a88bd;
+  outline: none;
+  cursor: pointer;
+}
+
+button:hover {
+  color: #ffffff;
+  background-color: #2a88bd;
+  box-shadow: none;
+}
+
+h1 {
+  font-size: 1.5em;
+  text-transform: uppercase;
+}
+
+.status {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.error {
+  color: #c9302c;
+}
+
+.success {
+  color: #449d44;
+}
+
+.login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.login form {
+  width: 300px;
+  padding: 1em;
+  background: #fff;
+  border-radius: 0.5em;
+  border: 1px solid #46b8da;
+  border-top-width: 0.5em;
+}
+
+.login h1 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 1em;
+}
+
+.login input {
+  width: 100%;
+  margin-bottom: 1em;
+}
+
+.login button {
+  width: 100%;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.login .status {
+  margin-bottom: 1em;
+}
+
+.admin {
+  margin: 2em;
+}
+
+.admin .item {
+  padding: 0.5em 1em;
+}
+
+.admin input {
+  width: 15em;
+  margin-right: 1em;
+}
+
+.admin button {
+  width: 12em;
+  margin-right: 1em;
+}
