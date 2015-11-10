@@ -644,7 +644,8 @@ function post(url, data) {
     headers: {
       'Content-Type': 'application/json',
       Authorization: 'Bearer ' + window.sessionStorage.token
-    }
+    },
+    body: JSON.stringify(data)
   }).then(function (resp) {
     return resp.json().then(function (data) {
       return resp.ok ? data : Promise.reject(data);

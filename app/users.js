@@ -11,7 +11,7 @@ export function isAdmin(user) {
 }
 
 function isDuplicate(name, exceptId) {
-  return users.any( user => user.name === name && user.id !== exceptId );
+  return users.some( user => user.name === name && user.id !== exceptId );
 }
 
 export function getUsers() {
@@ -26,6 +26,7 @@ export function login({name, password}) {
 }
 
 export function addUser({name, password}) {
+  console.log('adding '+name)
   if(!isDuplicate(name)) {
     const newUser = {id: nextId, name, password};
     users.push(newUser);

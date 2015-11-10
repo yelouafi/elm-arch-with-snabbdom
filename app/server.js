@@ -7,11 +7,11 @@ import Result from './Result';
 import { isAdmin, login, getUsers, addUser, updateUser, removeUser } from './users';
 
 const secret = 'dont tell anyone';
-const sendR = (response, status=400) =>
+const sendR = (response, result) =>
   Result.case({
     Success : data => response.json(data),
-    Error   : error => response.status(status).json({error})
-  });
+    Error   : error => response.status(400).json({error})
+  }, result);
 
 
 const app = express();
@@ -39,14 +39,14 @@ app.get ('/api/list'  , (req, res) => res.json(getUsers()));
 app.post('/api/add'   , (req, res) => sendR(res, addUser(req.body)));
 app.post('/api/update', (req, res) => sendR(res, updateUser(req.body)));
 app.post('/api/remove', (req, res) => sendR(res, removeUser(req.body)));
-/*
+
 app.use(function(err, req, res, next){
   if (err.name === 'UnauthorizedError') {
-    res.status(401).json({error: 'Invalid token'});
+    res.status(401).json({error: 'Login expired, Sign in again'});
   } else {
-     res.status(400).json({error: err});
+     res.status(500).json({error: 'Something wrong got on the server' });
   }
-});*/
+});
 
 app.listen(process.env.PORT || 3000, () =>
   console.log('Listening on '+process.IP + ':' + process.env.PORT)

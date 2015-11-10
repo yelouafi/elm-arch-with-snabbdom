@@ -32,6 +32,7 @@ export function post(url, data) {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${window.sessionStorage.token}`
     },
+    body: JSON.stringify(data)
   })
   .then(resp =>
     resp.json().then( data => resp.ok ? data : Promise.reject(data) ));
