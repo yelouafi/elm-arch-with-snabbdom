@@ -5,17 +5,24 @@ export default function ListModel(model) {
       return { nextID: 1, items: []};
     },
 
-    add({nextID, items}) {
+    addItem({nextID, items}) {
       return {
         nextID: nextID+1,
         items: [...items, {id: nextID, data: model.init()}]
       };
     },
 
-    update({nextID, items}, id, action, ...args) {
+    updateItem({nextID, items}, id, action) {
       return {
         nextID,
-        items: items.map(it => it.id !== id ? it : {id, data: action(it.data, ...args)})
+        items: items.map(it => it.id !== id ? it : {id, data: model.update(it.data, action)})
+      };
+    }
+
+    removeItem({nextID, items}, id) {
+      return {
+        nextID,
+        items: items.filter(it => it.id !== id)
       };
     }
   }

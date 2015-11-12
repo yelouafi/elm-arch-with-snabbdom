@@ -1,28 +1,31 @@
+/** @jsx html */
+
+import { html } from 'snabbdom-jsx';
 import snabbdom from 'snabbdom';
-import {view, model} from './CounterList';
+import App from './CounterList';
 
 const patch = snabbdom.init([
   require('snabbdom/modules/class'),
   require('snabbdom/modules/props'),
   require('snabbdom/modules/style'),
-  require('./on')(dispatch),
+  require('./on')(dispatch)
 ]);
 
 
-var state = model.init(),
+var state = App.init(),
     vnode = document.getElementById('placeholder');
 
 function updateUI() {
-  const newVnode = view({state});
+  const newVnode = <App state={state} />;
   vnode = patch(vnode, newVnode);
+  //console.log(vnode);
 }
 
-function dispatch(action, ...args) {
-  if(Array.isArray(action)) {
-    const [ctxtAction, ...ctxtArgs] = action;
-    state = ctxtAction(state, ...ctxtArgs, ...args);
-  } else
-    state = action(state, ...args);
+export function dispatch(action) {
+  if(typeof action === 'function')
+    action(dispatch, state);
+  else
+    state = App.update(state, action);
   updateUI();
 }
 

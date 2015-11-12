@@ -1,55 +1,90 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-"use strict";
+'use strict';
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; /** @jsx html */
+var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; })(); /** @jsx html */
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _snabbdomJsx = require("snabbdom-jsx");
+var _snabbdomJsx = require('snabbdom-jsx');
 
-var model = {
-  init: function init() {
-    return { value: 0, n: 0 };
+var _helpers = require('./helpers');
+
+var _contract = (0, _helpers.contract)({
+  increment: function increment(_ref) {
+    var count = _ref.count;
+    return { count: count + 1 };
   },
-  value: function value(state, e) {
-    return _extends({}, state, { value: +e.target.value });
+  decrement: function decrement(_ref2) {
+    var count = _ref2.count;
+    return { count: count - 1 };
   },
-  increment: function increment(state) {
-    return _extends({}, state, { n: state.n + state.value });
+  startInc: function startInc(_ref3) {
+    var count = _ref3.count;
+    return { count: count, pending: true };
   }
+});
+
+var _contract2 = _slicedToArray(_contract, 2);
+
+var update = _contract2[0];
+var actions = _contract2[1];
+
+function asyncInc() {
+  return function (dispatch) {
+    dispatch(actions.startInc());
+    setTimeout(function () {
+      return dispatch(actions.increment());
+    }, 2000);
+  };
+}
+
+var init = function init() {
+  return { count: 0 };
 };
 
-var view = function view(_ref) {
-  var state = _ref.state;
-  var context = _ref.context;
+var view = function view(_ref4) {
+  var state = _ref4.state;
+  var ctx = _ref4.ctx;
   return (0, _snabbdomJsx.html)(
-    "div",
+    'div',
     null,
-    (0, _snabbdomJsx.html)("input", { type: "number", "on-input": [context, model.value], value: state.value }),
     (0, _snabbdomJsx.html)(
-      "button",
-      { "on-click": [context, model.increment] },
-      "+"
+      'button',
+      { 'on-click': [actions.increment, ctx] },
+      '+'
     ),
     (0, _snabbdomJsx.html)(
-      "div",
+      'div',
       null,
-      state.n
+      state.count
+    ),
+    (0, _snabbdomJsx.html)(
+      'button',
+      { 'on-click': [actions.decrement, ctx] },
+      '-'
+    ),
+    (0, _snabbdomJsx.html)(
+      'button',
+      { disabled: state.pending, 'on-click': [asyncInc, ctx] },
+      '+ (async)'
     )
   );
 };
 
-exports.default = { model: model, view: view };
+exports.default = { init: init, update: update, view: view, actions: actions };
 
-},{"snabbdom-jsx":6}],2:[function(require,module,exports){
+},{"./helpers":3,"snabbdom-jsx":6}],2:[function(require,module,exports){
 'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; })(); /** @jsx html */
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.view = exports.model = undefined;
 
 var _snabbdomJsx = require('snabbdom-jsx');
 
@@ -57,23 +92,48 @@ var _Counter = require('./Counter');
 
 var _Counter2 = _interopRequireDefault(_Counter);
 
-var _ListModel = require('./ListModel');
-
-var _ListModel2 = _interopRequireDefault(_ListModel);
+var _helpers = require('./helpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var model = exports.model = (0, _ListModel2.default)(_Counter2.default.model); /** @jsx html */
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
 
-var view = exports.view = function view(_ref) {
+var _contract = (0, _helpers.contract)({
+  addItem: function addItem(state) {
+    return _extends({}, state, {
+      nextID: state.nextID + 1,
+      items: [].concat(_toConsumableArray(state.items), [{ id: state.nextID, data: _Counter2.default.init() }])
+    });
+  },
+  updateItem: function updateItem(state, id, action) {
+    return _extends({}, state, {
+      items: state.items.map(function (it) {
+        return it.id !== id ? it : {
+          id: id,
+          data: _Counter2.default.update(it.data, action)
+        };
+      })
+    });
+  }
+});
+
+var _contract2 = _slicedToArray(_contract, 2);
+
+var update = _contract2[0];
+var actions = _contract2[1];
+
+function itemContext(id) {
+  return (0, _helpers.withContext)(actions.updateItem, (0, _helpers.getter)('/items/' + id + '/data'), id);
+}
+
+var view = function view(_ref) {
   var items = _ref.state.items;
   return (0, _snabbdomJsx.html)(
     'div',
     null,
     (0, _snabbdomJsx.html)(
       'button',
-      {
-        'on-click': model.add },
+      { 'on-click': actions.addItem },
       'Add'
     ),
     (0, _snabbdomJsx.html)('hr', null),
@@ -94,56 +154,134 @@ var CounterItem = function CounterItem(_ref2) {
   return (0, _snabbdomJsx.html)(
     'div',
     { key: id },
-    (0, _snabbdomJsx.html)(_Counter2.default, {
-      state: data,
-      context: [model.update, id] })
+    (0, _snabbdomJsx.html)(_Counter2.default, { state: data, ctx: itemContext(id) })
   );
 };
 
-},{"./Counter":1,"./ListModel":3,"snabbdom-jsx":6}],3:[function(require,module,exports){
-"use strict";
+var init = function init() {
+  return { nextID: 1, items: [] };
+};
+
+exports.default = { init: init, update: update, view: view };
+
+},{"./Counter":1,"./helpers":3,"snabbdom-jsx":6}],3:[function(require,module,exports){
+'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = ListModel;
+exports.contract = contract;
+exports.pipe = pipe;
+exports.bind = bind;
+exports.withContext = withContext;
+exports.getter = getter;
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
 
-function ListModel(model) {
-  return {
-    init: function init() {
-      return { nextID: 1, items: [] };
-    },
-    add: function add(_ref) {
-      var nextID = _ref.nextID;
-      var items = _ref.items;
+function contract(model) {
+  var actions = {};
 
-      return {
-        nextID: nextID + 1,
-        items: [].concat(_toConsumableArray(items), [{ id: nextID, data: model.init() }])
-      };
-    },
-    update: function update(_ref2, id, action) {
-      for (var _len = arguments.length, args = Array(_len > 3 ? _len - 3 : 0), _key = 3; _key < _len; _key++) {
-        args[_key - 3] = arguments[_key];
+  var _loop = function _loop(type) {
+    if (type !== 'init') actions[type] = function () {
+      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
       }
 
-      var nextID = _ref2.nextID;
-      var items = _ref2.items;
+      return { type: type, args: args };
+    };
+  };
 
-      return {
-        nextID: nextID,
-        items: items.map(function (it) {
-          return it.id !== id ? it : { id: id, data: action.apply(undefined, [it.data].concat(args)) };
-        })
-      };
+  for (var type in model) {
+    _loop(type);
+  }
+  return [updater(model), actions];
+}
+
+function updater(model) {
+  return function (state, _ref) {
+    var type = _ref.type;
+    var args = _ref.args;
+
+    var handler = model[type];
+    if (handler) return handler.apply(undefined, [state].concat(_toConsumableArray(args)));else throw 'Unkown action ' + type;
+  };
+}
+
+function pipe() {
+  for (var _len2 = arguments.length, fns = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+    fns[_key2] = arguments[_key2];
+  }
+
+  return function (arg) {
+    var res = arg;
+    for (var i = 0; i < fns.length; i++) {
+      res = fns[i](res);
     }
+    return res;
+  };
+};
+
+function bind(fn) {
+  for (var _len3 = arguments.length, bargs = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+    bargs[_key3 - 1] = arguments[_key3];
+  }
+
+  return function () {
+    for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+      args[_key4] = arguments[_key4];
+    }
+
+    return fn.apply(undefined, bargs.concat(args));
+  };
+}
+
+var ident = function ident(x) {
+  return x;
+};
+
+function withContext(ctxAction) {
+  for (var _len5 = arguments.length, args = Array(_len5 > 2 ? _len5 - 2 : 0), _key5 = 2; _key5 < _len5; _key5++) {
+    args[_key5 - 2] = arguments[_key5];
+  }
+
+  var getState = arguments.length <= 1 || arguments[1] === undefined ? ident : arguments[1];
+
+  return function (action) {
+    if (typeof action === 'function') {
+      return function (dispatch, state) {
+        return action(function (a) {
+          return dispatch(ctxAction.apply(undefined, args.concat([a])));
+        }, getState(state));
+      };
+    } else {
+      return ctxAction.apply(undefined, args.concat([action]));
+    }
+  };
+}
+
+function getter(path) {
+  var parts = path.split('/');
+  return function (obj) {
+    var res = obj;
+    for (var i = 1; i < parts.length; i++) {
+      var prop = parts[i];
+      if (Array.isArray(res)) res = res.find(function (it) {
+        return it.id == prop;
+      });else if (res && prop in res) res = res[prop];else return undefined;
+    }
+    return res;
   };
 }
 
 },{}],4:[function(require,module,exports){
 'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.dispatch = dispatch;
+
+var _snabbdomJsx = require('snabbdom-jsx');
 
 var _snabbdom = require('snabbdom');
 
@@ -151,57 +289,56 @@ var _snabbdom2 = _interopRequireDefault(_snabbdom);
 
 var _CounterList = require('./CounterList');
 
+var _CounterList2 = _interopRequireDefault(_CounterList);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
+var patch = _snabbdom2.default.init([require('snabbdom/modules/class'), require('snabbdom/modules/props'), require('snabbdom/modules/style'), require('./on')(dispatch)]); /** @jsx html */
 
-function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
-
-var patch = _snabbdom2.default.init([require('snabbdom/modules/class'), require('snabbdom/modules/props'), require('snabbdom/modules/style'), require('./on')(dispatch)]);
-
-var state = _CounterList.model.init(),
+var state = _CounterList2.default.init(),
     vnode = document.getElementById('placeholder');
 
 function updateUI() {
-  var newVnode = (0, _CounterList.view)({ state: state });
+  var newVnode = (0, _snabbdomJsx.html)(_CounterList2.default, { state: state });
   vnode = patch(vnode, newVnode);
+  //console.log(vnode);
 }
 
 function dispatch(action) {
-  for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-    args[_key - 1] = arguments[_key];
-  }
-
-  if (Array.isArray(action)) {
-    var _action = _toArray(action);
-
-    var ctxtAction = _action[0];
-
-    var ctxtArgs = _action.slice(1);
-
-    state = ctxtAction.apply(undefined, [state].concat(_toConsumableArray(ctxtArgs), args));
-  } else state = action.apply(undefined, [state].concat(args));
+  if (typeof action === 'function') action(dispatch, state);else state = _CounterList2.default.update(state, action);
   updateUI();
 }
 
 updateUI();
 
-},{"./CounterList":2,"./on":5,"snabbdom":11,"snabbdom/modules/class":8,"snabbdom/modules/props":9,"snabbdom/modules/style":10}],5:[function(require,module,exports){
+},{"./CounterList":2,"./on":5,"snabbdom":11,"snabbdom-jsx":6,"snabbdom/modules/class":8,"snabbdom/modules/props":9,"snabbdom/modules/style":10}],5:[function(require,module,exports){
 "use strict";
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
-
-module.exports = function on(dispatch) {
-
-  function arrInvoker(arr) {
-    return function (ev) {
-      dispatch.apply(undefined, _toConsumableArray(arr).concat([ev]));
-    };
+function pipe() {
+  for (var _len = arguments.length, fns = Array(_len), _key = 0; _key < _len; _key++) {
+    fns[_key] = arguments[_key];
   }
+
+  return function (arg) {
+    var res = arg;
+    for (var i = 0; i < fns.length; i++) {
+      res = fns[i](res);
+    }
+    return res;
+  };
+};
+
+module.exports = function (dispatch) {
 
   function fnInvoker(o) {
     return function (ev) {
-      dispatch(o.fn, ev);
+      if (Array.isArray(o.fn)) {
+        var res = ev;
+        for (var i = 0; i < o.fn.length; i++) {
+          res = o.fn[i](res);
+        }
+        dispatch(res);
+      } else dispatch(o.fn(ev));
     };
   }
 
@@ -212,23 +349,15 @@ module.exports = function on(dispatch) {
         elm = vnode.elm,
         oldOn = oldVnode.data.on || {},
         on = vnode.data.on;
+
     if (!on) return;
     for (name in on) {
       cur = on[name];
       old = oldOn[name];
       if (old === undefined) {
-        if (Array.isArray(cur)) {
-          elm.addEventListener(name, arrInvoker(cur));
-        } else {
-          cur = { fn: cur };
-          on[name] = cur;
-          elm.addEventListener(name, fnInvoker(cur));
-        }
-      } else if (Array.isArray(old)) {
-        // Deliberately modify old array since it's captured in closure created with `arrInvoker`
-        old.length = cur.length;
-        for (var i = 0; i < old.length; ++i) old[i] = cur[i];
-        on[name] = old;
+        cur = { fn: cur };
+        on[name] = cur;
+        elm.addEventListener(name, fnInvoker(cur));
       } else {
         old.fn = cur;
         on[name] = old;
@@ -236,7 +365,10 @@ module.exports = function on(dispatch) {
     }
   }
 
-  return { create: updateEventListeners, update: updateEventListeners };
+  return {
+    create: updateEventListeners,
+    update: updateEventListeners
+  };
 };
 
 },{}],6:[function(require,module,exports){
