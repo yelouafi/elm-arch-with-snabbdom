@@ -22,3 +22,4 @@ The repository contains multiple different examples
 - Counter: a simple increment/decrement counter
 - Login: Demonstrates Asynchronous Actions in a single component
 - Admin: Demonstrates Asynchronous Actions in nested component hierarchies
+- Experiment: well this is just a place for my diabolic experiments

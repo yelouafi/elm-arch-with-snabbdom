@@ -1,68 +1,285 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
+var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; })(); /** @jsx html */
+
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
 var _snabbdomJsx = require('snabbdom-jsx');
 
-var _unionType = require('union-type');
+var _helpers = require('./helpers');
 
-var _unionType2 = _interopRequireDefault(_unionType);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-/** @jsx html */
-
-var Action = (0, _unionType2.default)({
-  Increment: [],
-  Decrement: []
+var _contract = (0, _helpers.contract)({
+  increment: function increment(_ref) {
+    var count = _ref.count;
+    return { count: count + 1 };
+  },
+  decrement: function decrement(_ref2) {
+    var count = _ref2.count;
+    return { count: count - 1 };
+  },
+  startInc: function startInc(_ref3) {
+    var count = _ref3.count;
+    return { count: count, pending: true };
+  }
 });
 
-var view = function view(_ref) {
-  var state = _ref.state;
-  var dispatch = _ref.dispatch;
+var _contract2 = _slicedToArray(_contract, 2);
+
+var update = _contract2[0];
+var actions = _contract2[1];
+
+function asyncInc() {
+  return function (dispatch) {
+    dispatch(actions.startInc());
+    setTimeout(function () {
+      return dispatch(actions.increment());
+    }, 2000);
+  };
+}
+
+var init = function init() {
+  return { count: 0 };
+};
+
+var view = function view(_ref4) {
+  var state = _ref4.state;
+  var ctx = _ref4.ctx;
   return (0, _snabbdomJsx.html)(
     'div',
     null,
     (0, _snabbdomJsx.html)(
       'button',
-      { 'on-click': [dispatch, Action.Increment()] },
+      { 'on-click': [actions.increment, ctx] },
       '+'
     ),
     (0, _snabbdomJsx.html)(
       'div',
       null,
-      state
+      state.count
     ),
     (0, _snabbdomJsx.html)(
       'button',
-      { 'on-click': [dispatch, Action.Decrement()] },
+      { 'on-click': [actions.decrement, ctx] },
       '-'
+    ),
+    (0, _snabbdomJsx.html)(
+      'button',
+      { disabled: state.pending, 'on-click': [asyncInc, ctx] },
+      '+ (async)'
     )
   );
 };
 
-var init = function init() {
-  return 0;
-};
+exports.default = { init: init, update: update, view: view, actions: actions };
 
-var update = function update(state, action) {
-  return Action.case({
-    Increment: function Increment() {
-      return state + 1;
-    },
-    Decrement: function Decrement() {
-      return state - 1;
-    }
-  }, action);
-};
-
-exports.default = { init: init, update: update, view: view, Action: Action };
-
-},{"snabbdom-jsx":8,"union-type":16}],2:[function(require,module,exports){
+},{"./helpers":3,"snabbdom-jsx":6}],2:[function(require,module,exports){
 'use strict';
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; })(); /** @jsx html */
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _snabbdomJsx = require('snabbdom-jsx');
+
+var _Counter = require('./Counter');
+
+var _Counter2 = _interopRequireDefault(_Counter);
+
+var _helpers = require('./helpers');
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
+
+var _contract = (0, _helpers.contract)({
+  addItem: function addItem(state) {
+    return _extends({}, state, {
+      nextID: state.nextID + 1,
+      items: [].concat(_toConsumableArray(state.items), [{ id: state.nextID, data: _Counter2.default.init() }])
+    });
+  },
+  updateItem: function updateItem(state, id, action) {
+    return _extends({}, state, {
+      items: state.items.map(function (it) {
+        return it.id !== id ? it : {
+          id: id,
+          data: _Counter2.default.update(it.data, action)
+        };
+      })
+    });
+  }
+});
+
+var _contract2 = _slicedToArray(_contract, 2);
+
+var update = _contract2[0];
+var actions = _contract2[1];
+
+function itemContext(id) {
+  return (0, _helpers.withContext)(actions.updateItem, (0, _helpers.getter)('/items/' + id + '/data'), id);
+}
+
+var view = function view(_ref) {
+  var items = _ref.state.items;
+  return (0, _snabbdomJsx.html)(
+    'div',
+    null,
+    (0, _snabbdomJsx.html)(
+      'button',
+      { 'on-click': actions.addItem },
+      'Add'
+    ),
+    (0, _snabbdomJsx.html)('hr', null),
+    (0, _snabbdomJsx.html)(
+      'div',
+      null,
+      items.map(function (item) {
+        return (0, _snabbdomJsx.html)(CounterItem, { item: item });
+      })
+    )
+  );
+};
+
+var CounterItem = function CounterItem(_ref2) {
+  var _ref2$item = _ref2.item;
+  var id = _ref2$item.id;
+  var data = _ref2$item.data;
+  return (0, _snabbdomJsx.html)(
+    'div',
+    { key: id },
+    (0, _snabbdomJsx.html)(_Counter2.default, { state: data, ctx: itemContext(id) })
+  );
+};
+
+var init = function init() {
+  return { nextID: 1, items: [] };
+};
+
+exports.default = { init: init, update: update, view: view };
+
+},{"./Counter":1,"./helpers":3,"snabbdom-jsx":6}],3:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.contract = contract;
+exports.pipe = pipe;
+exports.bind = bind;
+exports.withContext = withContext;
+exports.getter = getter;
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
+
+function contract(model) {
+  var actions = {};
+
+  var _loop = function _loop(type) {
+    if (type !== 'init') actions[type] = function () {
+      for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+
+      return { type: type, args: args };
+    };
+  };
+
+  for (var type in model) {
+    _loop(type);
+  }
+  return [updater(model), actions];
+}
+
+function updater(model) {
+  return function (state, _ref) {
+    var type = _ref.type;
+    var args = _ref.args;
+
+    var handler = model[type];
+    if (handler) return handler.apply(undefined, [state].concat(_toConsumableArray(args)));else throw 'Unkown action ' + type;
+  };
+}
+
+function pipe() {
+  for (var _len2 = arguments.length, fns = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+    fns[_key2] = arguments[_key2];
+  }
+
+  return function (arg) {
+    var res = arg;
+    for (var i = 0; i < fns.length; i++) {
+      res = fns[i](res);
+    }
+    return res;
+  };
+};
+
+function bind(fn) {
+  for (var _len3 = arguments.length, bargs = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+    bargs[_key3 - 1] = arguments[_key3];
+  }
+
+  return function () {
+    for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+      args[_key4] = arguments[_key4];
+    }
+
+    return fn.apply(undefined, bargs.concat(args));
+  };
+}
+
+var ident = function ident(x) {
+  return x;
+};
+
+function withContext(ctxAction) {
+  for (var _len5 = arguments.length, args = Array(_len5 > 2 ? _len5 - 2 : 0), _key5 = 2; _key5 < _len5; _key5++) {
+    args[_key5 - 2] = arguments[_key5];
+  }
+
+  var getState = arguments.length <= 1 || arguments[1] === undefined ? ident : arguments[1];
+
+  return function (action) {
+    if (typeof action === 'function') {
+      return function (dispatch, state) {
+        return action(function (a) {
+          return dispatch(ctxAction.apply(undefined, args.concat([a])));
+        }, getState(state));
+      };
+    } else {
+      return ctxAction.apply(undefined, args.concat([action]));
+    }
+  };
+}
+
+function getter(path) {
+  var parts = path.split('/');
+  return function (obj) {
+    var res = obj;
+    for (var i = 1; i < parts.length; i++) {
+      var prop = parts[i];
+      if (Array.isArray(res)) res = res.find(function (it) {
+        return it.id == prop;
+      });else if (res && prop in res) res = res[prop];else return undefined;
+    }
+    return res;
+  };
+}
+
+},{}],4:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.dispatch = dispatch;
 
 var _snabbdomJsx = require('snabbdom-jsx');
 
@@ -70,227 +287,91 @@ var _snabbdom = require('snabbdom');
 
 var _snabbdom2 = _interopRequireDefault(_snabbdom);
 
-var _Counter = require('./Counter');
+var _CounterList = require('./CounterList');
 
-var _Counter2 = _interopRequireDefault(_Counter);
+var _CounterList2 = _interopRequireDefault(_CounterList);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var patch = _snabbdom2.default.init([require('snabbdom/modules/class'), require('snabbdom/modules/props'), require('snabbdom/modules/style'), require('snabbdom/modules/eventlisteners')]); /** @jsx html */
+var patch = _snabbdom2.default.init([require('snabbdom/modules/class'), require('snabbdom/modules/props'), require('snabbdom/modules/style'), require('./on')(dispatch)]); /** @jsx html */
 
-var state = _Counter2.default.init(),
+var state = _CounterList2.default.init(),
     vnode = document.getElementById('placeholder');
 
 function updateUI() {
-  var newVnode = (0, _snabbdomJsx.html)(_Counter2.default, { state: state, dispatch: dispatch });
+  var newVnode = (0, _snabbdomJsx.html)(_CounterList2.default, { state: state });
   vnode = patch(vnode, newVnode);
+  //console.log(vnode);
 }
 
 function dispatch(action) {
-  state = _Counter2.default.update(state, action);
+  if (typeof action === 'function') action(dispatch, state);else state = _CounterList2.default.update(state, action);
   updateUI();
 }
 
 updateUI();
 
-},{"./Counter":1,"snabbdom":14,"snabbdom-jsx":8,"snabbdom/modules/class":10,"snabbdom/modules/eventlisteners":11,"snabbdom/modules/props":12,"snabbdom/modules/style":13}],3:[function(require,module,exports){
-var _curry2 = require('./internal/_curry2');
+},{"./CounterList":2,"./on":5,"snabbdom":11,"snabbdom-jsx":6,"snabbdom/modules/class":8,"snabbdom/modules/props":9,"snabbdom/modules/style":10}],5:[function(require,module,exports){
+"use strict";
 
-
-/**
- * Wraps a function of any arity (including nullary) in a function that accepts exactly `n`
- * parameters. Unlike `nAry`, which passes only `n` arguments to the wrapped function,
- * functions produced by `arity` will pass all provided arguments to the wrapped function.
- *
- * @func
- * @memberOf R
- * @sig (Number, (* -> *)) -> (* -> *)
- * @category Function
- * @param {Number} n The desired arity of the returned function.
- * @param {Function} fn The function to wrap.
- * @return {Function} A new function wrapping `fn`. The new function is
- *         guaranteed to be of arity `n`.
- * @deprecated since v0.15.0
- * @example
- *
- *      var takesTwoArgs = function(a, b) {
- *        return [a, b];
- *      };
- *      takesTwoArgs.length; //=> 2
- *      takesTwoArgs(1, 2); //=> [1, 2]
- *
- *      var takesOneArg = R.arity(1, takesTwoArgs);
- *      takesOneArg.length; //=> 1
- *      // All arguments are passed through to the wrapped function
- *      takesOneArg(1, 2); //=> [1, 2]
- */
-module.exports = _curry2(function(n, fn) {
-  // jshint unused:vars
-  switch (n) {
-    case 0: return function() {return fn.apply(this, arguments);};
-    case 1: return function(a0) {return fn.apply(this, arguments);};
-    case 2: return function(a0, a1) {return fn.apply(this, arguments);};
-    case 3: return function(a0, a1, a2) {return fn.apply(this, arguments);};
-    case 4: return function(a0, a1, a2, a3) {return fn.apply(this, arguments);};
-    case 5: return function(a0, a1, a2, a3, a4) {return fn.apply(this, arguments);};
-    case 6: return function(a0, a1, a2, a3, a4, a5) {return fn.apply(this, arguments);};
-    case 7: return function(a0, a1, a2, a3, a4, a5, a6) {return fn.apply(this, arguments);};
-    case 8: return function(a0, a1, a2, a3, a4, a5, a6, a7) {return fn.apply(this, arguments);};
-    case 9: return function(a0, a1, a2, a3, a4, a5, a6, a7, a8) {return fn.apply(this, arguments);};
-    case 10: return function(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) {return fn.apply(this, arguments);};
-    default: throw new Error('First argument to arity must be a non-negative integer no greater than ten');
+function pipe() {
+  for (var _len = arguments.length, fns = Array(_len), _key = 0; _key < _len; _key++) {
+    fns[_key] = arguments[_key];
   }
-});
 
-},{"./internal/_curry2":6}],4:[function(require,module,exports){
-var _curry2 = require('./internal/_curry2');
-var _curryN = require('./internal/_curryN');
-var arity = require('./arity');
-
-
-/**
- * Returns a curried equivalent of the provided function, with the
- * specified arity. The curried function has two unusual capabilities.
- * First, its arguments needn't be provided one at a time. If `g` is
- * `R.curryN(3, f)`, the following are equivalent:
- *
- *   - `g(1)(2)(3)`
- *   - `g(1)(2, 3)`
- *   - `g(1, 2)(3)`
- *   - `g(1, 2, 3)`
- *
- * Secondly, the special placeholder value `R.__` may be used to specify
- * "gaps", allowing partial application of any combination of arguments,
- * regardless of their positions. If `g` is as above and `_` is `R.__`,
- * the following are equivalent:
- *
- *   - `g(1, 2, 3)`
- *   - `g(_, 2, 3)(1)`
- *   - `g(_, _, 3)(1)(2)`
- *   - `g(_, _, 3)(1, 2)`
- *   - `g(_, 2)(1)(3)`
- *   - `g(_, 2)(1, 3)`
- *   - `g(_, 2)(_, 3)(1)`
- *
- * @func
- * @memberOf R
- * @category Function
- * @sig Number -> (* -> a) -> (* -> a)
- * @param {Number} length The arity for the returned function.
- * @param {Function} fn The function to curry.
- * @return {Function} A new, curried function.
- * @see R.curry
- * @example
- *
- *      var addFourNumbers = function() {
- *        return R.sum([].slice.call(arguments, 0, 4));
- *      };
- *
- *      var curriedAddFourNumbers = R.curryN(4, addFourNumbers);
- *      var f = curriedAddFourNumbers(1, 2);
- *      var g = f(3);
- *      g(4); //=> 10
- */
-module.exports = _curry2(function curryN(length, fn) {
-  return arity(length, _curryN(length, [], fn));
-});
-
-},{"./arity":3,"./internal/_curry2":6,"./internal/_curryN":7}],5:[function(require,module,exports){
-/**
- * Optimized internal two-arity curry function.
- *
- * @private
- * @category Function
- * @param {Function} fn The function to curry.
- * @return {Function} The curried function.
- */
-module.exports = function _curry1(fn) {
-  return function f1(a) {
-    if (arguments.length === 0) {
-      return f1;
-    } else if (a != null && a['@@functional/placeholder'] === true) {
-      return f1;
-    } else {
-      return fn(a);
+  return function (arg) {
+    var res = arg;
+    for (var i = 0; i < fns.length; i++) {
+      res = fns[i](res);
     }
+    return res;
+  };
+};
+
+module.exports = function (dispatch) {
+
+  function fnInvoker(o) {
+    return function (ev) {
+      if (Array.isArray(o.fn)) {
+        var res = ev;
+        for (var i = 0; i < o.fn.length; i++) {
+          res = o.fn[i](res);
+        }
+        dispatch(res);
+      } else dispatch(o.fn(ev));
+    };
+  }
+
+  function updateEventListeners(oldVnode, vnode) {
+    var name,
+        cur,
+        old,
+        elm = vnode.elm,
+        oldOn = oldVnode.data.on || {},
+        on = vnode.data.on;
+
+    if (!on) return;
+    for (name in on) {
+      cur = on[name];
+      old = oldOn[name];
+      if (old === undefined) {
+        cur = { fn: cur };
+        on[name] = cur;
+        elm.addEventListener(name, fnInvoker(cur));
+      } else {
+        old.fn = cur;
+        on[name] = old;
+      }
+    }
+  }
+
+  return {
+    create: updateEventListeners,
+    update: updateEventListeners
   };
 };
 
 },{}],6:[function(require,module,exports){
-var _curry1 = require('./_curry1');
-
-
-/**
- * Optimized internal two-arity curry function.
- *
- * @private
- * @category Function
- * @param {Function} fn The function to curry.
- * @return {Function} The curried function.
- */
-module.exports = function _curry2(fn) {
-  return function f2(a, b) {
-    var n = arguments.length;
-    if (n === 0) {
-      return f2;
-    } else if (n === 1 && a != null && a['@@functional/placeholder'] === true) {
-      return f2;
-    } else if (n === 1) {
-      return _curry1(function(b) { return fn(a, b); });
-    } else if (n === 2 && a != null && a['@@functional/placeholder'] === true &&
-                          b != null && b['@@functional/placeholder'] === true) {
-      return f2;
-    } else if (n === 2 && a != null && a['@@functional/placeholder'] === true) {
-      return _curry1(function(a) { return fn(a, b); });
-    } else if (n === 2 && b != null && b['@@functional/placeholder'] === true) {
-      return _curry1(function(b) { return fn(a, b); });
-    } else {
-      return fn(a, b);
-    }
-  };
-};
-
-},{"./_curry1":5}],7:[function(require,module,exports){
-var arity = require('../arity');
-
-
-/**
- * Internal curryN function.
- *
- * @private
- * @category Function
- * @param {Number} length The arity of the curried function.
- * @return {array} An array of arguments received thus far.
- * @param {Function} fn The function to curry.
- */
-module.exports = function _curryN(length, received, fn) {
-  return function() {
-    var combined = [];
-    var argsIdx = 0;
-    var left = length;
-    var combinedIdx = 0;
-    while (combinedIdx < received.length || argsIdx < arguments.length) {
-      var result;
-      if (combinedIdx < received.length &&
-          (received[combinedIdx] == null ||
-           received[combinedIdx]['@@functional/placeholder'] !== true ||
-           argsIdx >= arguments.length)) {
-        result = received[combinedIdx];
-      } else {
-        result = arguments[argsIdx];
-        argsIdx += 1;
-      }
-      combined[combinedIdx] = result;
-      if (result == null || result['@@functional/placeholder'] !== true) {
-        left -= 1;
-      }
-      combinedIdx += 1;
-    }
-    return left <= 0 ? fn.apply(this, combined) : arity(left, _curryN(length, combined, fn));
-  };
-};
-
-},{"../arity":3}],8:[function(require,module,exports){
 "use strict";
 
 var SVGNS = "http://www.w3.org/2000/svg";
@@ -364,13 +445,13 @@ module.exports = {
   JSX: JSX 
 };
 
-},{}],9:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 module.exports = {
   array: Array.isArray,
   primitive: function(s) { return typeof s === 'string' || typeof s === 'number'; },
 };
 
-},{}],10:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 function updateClass(oldVnode, vnode) {
   var cur, name, elm = vnode.elm,
       oldClass = oldVnode.data.class || {},
@@ -385,50 +466,7 @@ function updateClass(oldVnode, vnode) {
 
 module.exports = {create: updateClass, update: updateClass};
 
-},{}],11:[function(require,module,exports){
-var is = require('../is');
-
-function arrInvoker(arr) {
-  return function() {
-    // Special case when length is two, for performance
-    arr.length === 2 ? arr[0](arr[1]) : arr[0].apply(undefined, arr.slice(1));
-  };
-}
-
-function fnInvoker(o) {
-  return function(ev) { o.fn(ev); };
-}
-
-function updateEventListeners(oldVnode, vnode) {
-  var name, cur, old, elm = vnode.elm,
-      oldOn = oldVnode.data.on || {}, on = vnode.data.on;
-  if (!on) return;
-  for (name in on) {
-    cur = on[name];
-    old = oldOn[name];
-    if (old === undefined) {
-      if (is.array(cur)) {
-        elm.addEventListener(name, arrInvoker(cur));
-      } else {
-        cur = {fn: cur};
-        on[name] = cur;
-        elm.addEventListener(name, fnInvoker(cur));
-      }
-    } else if (is.array(old)) {
-      // Deliberately modify old array since it's captured in closure created with `arrInvoker`
-      old.length = cur.length;
-      for (var i = 0; i < old.length; ++i) old[i] = cur[i];
-      on[name]  = old;
-    } else {
-      old.fn = cur;
-      on[name] = old;
-    }
-  }
-}
-
-module.exports = {create: updateEventListeners, update: updateEventListeners};
-
-},{"../is":9}],12:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 function updateProps(oldVnode, vnode) {
   var key, cur, old, elm = vnode.elm,
       oldProps = oldVnode.data.props || {}, props = vnode.data.props || {};
@@ -443,7 +481,7 @@ function updateProps(oldVnode, vnode) {
 
 module.exports = {create: updateProps, update: updateProps};
 
-},{}],13:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var raf = requestAnimationFrame || setTimeout;
 var nextFrame = function(fn) { raf(function() { raf(fn); }); };
 
@@ -504,7 +542,7 @@ function applyRemoveStyle(vnode, rm) {
 
 module.exports = {create: updateStyle, update: updateStyle, destroy: applyDestroyStyle, remove: applyRemoveStyle};
 
-},{}],14:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 // jshint newcap: false
 /* global require, module, document, Element */
 'use strict';
@@ -739,81 +777,11 @@ function init(modules) {
 
 module.exports = {init: init};
 
-},{"./is":9,"./vnode":15}],15:[function(require,module,exports){
+},{"./is":7,"./vnode":12}],12:[function(require,module,exports){
 module.exports = function(sel, data, children, text, elm) {
   var key = data === undefined ? undefined : data.key;
   return {sel: sel, data: data, children: children,
           text: text, elm: elm, key: key};
 };
 
-},{}],16:[function(require,module,exports){
-var curryN = require('ramda/src/curryN');
-
-function isString(s) { return typeof s === 'string'; }
-function isNumber(n) { return typeof n === 'number'; }
-function isObject(value) {
-  var type = typeof value;
-  return !!value && (type == 'object' || type == 'function');
-}
-function isFunction(f) { return typeof f === 'function'; }
-var isArray = Array.isArray || function(a) { return 'length' in a; };
-
-var mapConstrToFn = curryN(2, function(group, constr) {
-  return constr === String    ? isString
-       : constr === Number    ? isNumber
-       : constr === Object    ? isObject
-       : constr === Array     ? isArray
-       : constr === Function  ? isFunction
-       : constr === undefined ? group
-                              : constr;
-});
-
-function Constructor(group, name, validators) {
-  validators = validators.map(mapConstrToFn(group));
-  var constructor = curryN(validators.length, function() {
-    var val = [], v, validator;
-    for (var i = 0; i < arguments.length; ++i) {
-      v = arguments[i];
-      validator = validators[i];
-      if ((typeof validator === 'function' && validator(v)) ||
-          (v !== undefined && v !== null && v.of === validator)) {
-        val[i] = arguments[i];
-      } else {
-        throw new TypeError('wrong value ' + v + ' passed to location ' + i + ' in ' + name);
-      }
-    }
-    val.of = group;
-    val.name = name;
-    return val;
-  });
-  return constructor;
-}
-
-function rawCase(type, cases, action, arg) {
-  if (type !== action.of) throw new TypeError('wrong type passed to case');
-  var name = action.name in cases ? action.name
-           : '_' in cases         ? '_'
-                                  : undefined;
-  if (name === undefined) {
-    throw new Error('unhandled value passed to case');
-  } else {
-    return cases[name].apply(undefined, arg !== undefined ? action.concat([arg]) : action);
-  }
-}
-
-var typeCase = curryN(3, rawCase);
-var caseOn = curryN(4, rawCase);
-
-function Type(desc) {
-  var obj = {};
-  for (var key in desc) {
-    obj[key] = Constructor(obj, key, desc[key]);
-  }
-  obj.case = typeCase(obj);
-  obj.caseOn = caseOn(obj);
-  return obj;
-}
-
-module.exports = Type;
-
-},{"ramda/src/curryN":4}]},{},[2]);
+},{}]},{},[4]);

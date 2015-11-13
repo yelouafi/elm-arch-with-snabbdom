@@ -1,33 +1,25 @@
 /** @jsx html */
 
 import { html } from 'snabbdom-jsx';
-import { contract, pipe } from './helpers';
+import Type from 'union-type';
 
-const [update, actions] = contract({
-  increment : ({count}) => ({count: count + 1}),
-  decrement : ({count}) => ({count: count - 1}),
-  setCount  : (_, value) => ({count: value}),
-  startInc  : ({count}) => ({count, pending: true})
-});
+const Action = Type({
+  Increment: [],
+  Decrement: []
+})
 
-function asyncInc(){
-  return  dispatch => {
-    dispatch(actions.startInc());
-    setTimeout(() => dispatch(actions.increment()), 2000);
-  };
-}
-
-const inputValue = e => e.target.value;
-
-const init = () => ({count: 0});
-
-const view = ({state, ctx}) =>
+const view = ({state, dispatch}) =>
     <div>
-      <input type="number" on-change={[pipe(inputValue, actions.setCount), ctx]}
-      <button on-click={[actions.increment, ctx]}>+</button>
-      <div>{state.count}</div>
-      <button on-click={[actions.decrement, ctx]}>-</button>
-      <button disabled={state.pending} on-click={[asyncInc, ctx]}>+ (async)</button>
+      <button on-click={[dispatch, Action.Increment()]}>+</button>
+      <div>{state}</div>
+      <button on-click={[dispatch, Action.Decrement()]}>-</button>
     </div>;
 
-export default { init, update, view, actions };
+const init = () => 0;
+
+const update = (state, action) => Action.case({
+  Increment: () => state + 1,
+  Decrement: () => state - 1
+}, action);
+
+export default { init, update, view, Action };

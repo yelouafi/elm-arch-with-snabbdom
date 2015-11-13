@@ -1,0 +1,9 @@
+* {
+  box-sizing: border-box;
+}
+
+div, button {
+  text-align: center;
+  padding: 5px;
+  font-weight: bold;
+}

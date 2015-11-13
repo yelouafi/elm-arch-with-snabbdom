@@ -2,8 +2,18 @@
   box-sizing: border-box;
 }
 
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  height: 100vh;
+}
+
 div, button {
+  width: 50px;
   text-align: center;
   padding: 5px;
+  font-size: 1.5em;
   font-weight: bold;
 }
