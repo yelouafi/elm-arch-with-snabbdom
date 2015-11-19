@@ -11,13 +11,18 @@ var _unionType = require('union-type');
 
 var _unionType2 = _interopRequireDefault(_unionType);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _updateResult = require('./updateResult');
 
-/** @jsx html */
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var Action = (0, _unionType2.default)({
   Increment: [],
-  Decrement: []
+  Decrement: [],
+  IncrementLater: []
+}); /** @jsx html */
+
+var Effect = (0, _unionType2.default)({
+  IncrementAsync: []
 });
 
 var view = function view(_ref) {
@@ -40,29 +45,56 @@ var view = function view(_ref) {
       'button',
       { 'on-click': [dispatch, Action.Decrement()] },
       '-'
+    ),
+    (0, _snabbdomJsx.html)(
+      'button',
+      { 'on-click': [dispatch, Action.IncrementLater()] },
+      '+ (Async)'
     )
   );
 };
 
 var init = function init() {
-  return 0;
+  return (0, _updateResult.pure)(0);
 };
 
 var update = function update(state, action) {
   return Action.case({
     Increment: function Increment() {
-      return state + 1;
+      return (0, _updateResult.pure)(state + 1);
     },
     Decrement: function Decrement() {
-      return state - 1;
+      return (0, _updateResult.pure)(state - 1);
+    },
+    IncrementLater: function IncrementLater() {
+      return (0, _updateResult.withEffects)(state, Effect.IncrementAsync());
     }
   }, action);
 };
 
-exports.default = { init: init, update: update, view: view, Action: Action };
+function incrementAsync(dispatch) {
+  setTimeout(function () {
+    return dispatch(Action.Increment());
+  }, 1000);
+}
 
-},{"snabbdom-jsx":8,"union-type":16}],2:[function(require,module,exports){
+var execute = function execute(state, effect, dispatch) {
+  return Effect.case({
+    IncrementAsync: function IncrementAsync() {
+      return incrementAsync(dispatch);
+    }
+  }, effect);
+};
+
+exports.default = { view: view, init: init, update: update, execute: execute, Action: Action, Effect: Effect };
+
+},{"./updateResult":3,"snabbdom-jsx":9,"union-type":17}],2:[function(require,module,exports){
 'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.dispatch = dispatch;
 
 var _snabbdomJsx = require('snabbdom-jsx');
 
@@ -70,15 +102,19 @@ var _snabbdom = require('snabbdom');
 
 var _snabbdom2 = _interopRequireDefault(_snabbdom);
 
+var _updateResult = require('./updateResult');
+
 var _Counter = require('./Counter');
 
 var _Counter2 = _interopRequireDefault(_Counter);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var patch = _snabbdom2.default.init([require('snabbdom/modules/class'), require('snabbdom/modules/props'), require('snabbdom/modules/style'), require('snabbdom/modules/eventlisteners')]); /** @jsx html */
+/** @jsx html */
 
-var state = _Counter2.default.init(),
+var patch = _snabbdom2.default.init([require('snabbdom/modules/class'), require('snabbdom/modules/props'), require('snabbdom/modules/style'), require('snabbdom/modules/eventListeners')]);
+
+var state,
     vnode = document.getElementById('placeholder');
 
 function updateUI() {
@@ -86,14 +122,61 @@ function updateUI() {
   vnode = patch(vnode, newVnode);
 }
 
-function dispatch(action) {
-  state = _Counter2.default.update(state, action);
+function updateStatePure(newState) {
+  state = newState;
   updateUI();
 }
 
-updateUI();
+function updateStateWithEffect(newState, effect) {
+  updateStatePure(newState);
+  _Counter2.default.execute(state, effect, dispatch);
+}
 
-},{"./Counter":1,"snabbdom":14,"snabbdom-jsx":8,"snabbdom/modules/class":10,"snabbdom/modules/eventlisteners":11,"snabbdom/modules/props":12,"snabbdom/modules/style":13}],3:[function(require,module,exports){
+function handleUpdateResult(updateResult) {
+  _updateResult.UpdateResult.case({
+    Pure: updateStatePure,
+    WithEffects: updateStateWithEffect
+  }, updateResult);
+}
+
+function dispatch(action) {
+  var updateResult = _Counter2.default.update(state, action);
+  handleUpdateResult(updateResult);
+}
+
+handleUpdateResult(_Counter2.default.init());
+
+},{"./Counter":1,"./updateResult":3,"snabbdom":15,"snabbdom-jsx":9,"snabbdom/modules/class":11,"snabbdom/modules/eventListeners":12,"snabbdom/modules/props":13,"snabbdom/modules/style":14}],3:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.withEffects = exports.pure = exports.UpdateResult = undefined;
+
+var _unionType = require('union-type');
+
+var _unionType2 = _interopRequireDefault(_unionType);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var T = function T() {
+  return true;
+};
+
+var UpdateResult = exports.UpdateResult = (0, _unionType2.default)({
+  Pure: [T],
+  WithEffects: [T, T]
+});
+
+var pure = exports.pure = function pure(v) {
+  return UpdateResult.Pure(v);
+};
+var withEffects = exports.withEffects = function withEffects(v, ef) {
+  return UpdateResult.WithEffects(v, ef);
+};
+
+},{"union-type":17}],4:[function(require,module,exports){
 var _curry2 = require('./internal/_curry2');
 
 
@@ -142,7 +225,7 @@ module.exports = _curry2(function(n, fn) {
   }
 });
 
-},{"./internal/_curry2":6}],4:[function(require,module,exports){
+},{"./internal/_curry2":7}],5:[function(require,module,exports){
 var _curry2 = require('./internal/_curry2');
 var _curryN = require('./internal/_curryN');
 var arity = require('./arity');
@@ -195,7 +278,7 @@ module.exports = _curry2(function curryN(length, fn) {
   return arity(length, _curryN(length, [], fn));
 });
 
-},{"./arity":3,"./internal/_curry2":6,"./internal/_curryN":7}],5:[function(require,module,exports){
+},{"./arity":4,"./internal/_curry2":7,"./internal/_curryN":8}],6:[function(require,module,exports){
 /**
  * Optimized internal two-arity curry function.
  *
@@ -216,7 +299,7 @@ module.exports = function _curry1(fn) {
   };
 };
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 var _curry1 = require('./_curry1');
 
 
@@ -250,7 +333,7 @@ module.exports = function _curry2(fn) {
   };
 };
 
-},{"./_curry1":5}],7:[function(require,module,exports){
+},{"./_curry1":6}],8:[function(require,module,exports){
 var arity = require('../arity');
 
 
@@ -290,7 +373,7 @@ module.exports = function _curryN(length, received, fn) {
   };
 };
 
-},{"../arity":3}],8:[function(require,module,exports){
+},{"../arity":4}],9:[function(require,module,exports){
 "use strict";
 
 var SVGNS = "http://www.w3.org/2000/svg";
@@ -364,13 +447,13 @@ module.exports = {
   JSX: JSX 
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 module.exports = {
   array: Array.isArray,
   primitive: function(s) { return typeof s === 'string' || typeof s === 'number'; },
 };
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 function updateClass(oldVnode, vnode) {
   var cur, name, elm = vnode.elm,
       oldClass = oldVnode.data.class || {},
@@ -385,7 +468,7 @@ function updateClass(oldVnode, vnode) {
 
 module.exports = {create: updateClass, update: updateClass};
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var is = require('../is');
 
 function arrInvoker(arr) {
@@ -428,7 +511,7 @@ function updateEventListeners(oldVnode, vnode) {
 
 module.exports = {create: updateEventListeners, update: updateEventListeners};
 
-},{"../is":9}],12:[function(require,module,exports){
+},{"../is":10}],13:[function(require,module,exports){
 function updateProps(oldVnode, vnode) {
   var key, cur, old, elm = vnode.elm,
       oldProps = oldVnode.data.props || {}, props = vnode.data.props || {};
@@ -443,7 +526,7 @@ function updateProps(oldVnode, vnode) {
 
 module.exports = {create: updateProps, update: updateProps};
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 var raf = requestAnimationFrame || setTimeout;
 var nextFrame = function(fn) { raf(function() { raf(fn); }); };
 
@@ -504,7 +587,7 @@ function applyRemoveStyle(vnode, rm) {
 
 module.exports = {create: updateStyle, update: updateStyle, destroy: applyDestroyStyle, remove: applyRemoveStyle};
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 // jshint newcap: false
 /* global require, module, document, Element */
 'use strict';
@@ -739,14 +822,14 @@ function init(modules) {
 
 module.exports = {init: init};
 
-},{"./is":9,"./vnode":15}],15:[function(require,module,exports){
+},{"./is":10,"./vnode":16}],16:[function(require,module,exports){
 module.exports = function(sel, data, children, text, elm) {
   var key = data === undefined ? undefined : data.key;
   return {sel: sel, data: data, children: children,
           text: text, elm: elm, key: key};
 };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var curryN = require('ramda/src/curryN');
 
 function isString(s) { return typeof s === 'string'; }
@@ -816,4 +899,4 @@ function Type(desc) {
 
 module.exports = Type;
 
-},{"ramda/src/curryN":4}]},{},[2]);
+},{"ramda/src/curryN":5}]},{},[2]);

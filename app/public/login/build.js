@@ -17,6 +17,12 @@ var _RequestStatus = require('./RequestStatus');
 
 var _RequestStatus2 = _interopRequireDefault(_RequestStatus);
 
+var _UpdateResult = require('./UpdateResult');
+
+var _api = require('./api');
+
+var _api2 = _interopRequireDefault(_api);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /*
@@ -30,9 +36,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var Action = (0, _unionType2.default)({
   Name: [String],
   Password: [String],
-  LoginStart: [],
-  LoginSuccess: [Object],
-  LoginError: [Object]
+  Login: [],
+  LoginSuccess: [String],
+  LoginError: [String]
+});
+
+var Effect = (0, _unionType2.default)({
+  Login: []
 });
 
 function onInput(dispatch, action) {
@@ -44,7 +54,7 @@ function onInput(dispatch, action) {
 function onSubmit(dispatch) {
   return function (e) {
     e.preventDefault();
-    dispatch(Action.LoginStart());
+    dispatch(Action.Login());
     return false;
   };
 }
@@ -96,7 +106,7 @@ var statusMsg = _RequestStatus2.default.case({
   Pending: function Pending() {
     return 'Logging in ...';
   },
-  Success: function Success(msg) {
+  Success: function Success() {
     return 'Login Successfull';
   },
   Error: function Error(error) {
@@ -105,48 +115,47 @@ var statusMsg = _RequestStatus2.default.case({
 });
 
 function init() {
-  return { name: '', password: '', status: _RequestStatus2.default.Empty() };
+  return (0, _UpdateResult.pure)({ name: '', password: '', status: _RequestStatus2.default.Empty() });
 }
 
-function save(state, dispatch) {
-  fetch('/login', {
-    method: 'post',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(state, ['name', 'password'])
-  }).then(function (resp) {
-    return resp.json().then(resp.ok ? Action.LoginSuccess : Action.LoginError);
-  }).then(dispatch);
-
-  return _extends({}, state, { status: _RequestStatus2.default.Pending() });
+function login(state, dispatch) {
+  _api2.default.login(state.name, state.password).then(Action.LoginSuccess, Action.LoginError).then(dispatch);
 }
 
-function update(state, action, dispatch) {
+function update(state, action) {
   return Action.case({
     // Input actions
     Name: function Name(name) {
-      return _extends({}, state, { name: name });
+      return (0, _UpdateResult.pure)(_extends({}, state, { name: name }));
     },
     Password: function Password(password) {
-      return _extends({}, state, { password: password });
+      return (0, _UpdateResult.pure)(_extends({}, state, { password: password }));
     },
+
     // Request actions
-    LoginStart: function LoginStart() {
-      return save(state, dispatch);
+    Login: function Login() {
+      return (0, _UpdateResult.withEffects)(_extends({}, state, { status: _RequestStatus2.default.Pending() }), Effect.Login());
     },
-    LoginSuccess: function LoginSuccess(_ref2) {
-      var id = _ref2.id;
-      return _extends({}, state, { status: _RequestStatus2.default.Success(id) });
+    LoginSuccess: function LoginSuccess() {
+      return (0, _UpdateResult.pure)(_extends({}, state, { status: _RequestStatus2.default.Success('') }));
     },
-    LoginError: function LoginError(_ref3) {
-      var error = _ref3.error;
-      return _extends({}, state, { status: _RequestStatus2.default.Error(error) });
+    LoginError: function LoginError(error) {
+      return (0, _UpdateResult.pure)(_extends({}, state, { status: _RequestStatus2.default.Error(error) }));
     }
   }, action);
 }
 
-exports.default = { init: init, view: view, update: update, Action: Action };
+function execute(state, effect, dispatch) {
+  Effect.case({
+    Login: function Login() {
+      return login(state, dispatch);
+    }
+  }, effect);
+}
 
-},{"./RequestStatus":2,"snabbdom-jsx":9,"union-type":17}],2:[function(require,module,exports){
+exports.default = { view: view, init: init, update: update, Action: Action, execute: execute, Effect: Effect };
+
+},{"./RequestStatus":2,"./UpdateResult":3,"./api":6,"snabbdom-jsx":14,"union-type":22}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -199,8 +208,189 @@ Status.isError = Status.case({
 
 exports.default = Status;
 
-},{"union-type":17}],3:[function(require,module,exports){
+},{"union-type":22}],3:[function(require,module,exports){
 'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.withEffects = exports.pure = exports.UpdateResult = undefined;
+
+var _unionType = require('union-type');
+
+var _unionType2 = _interopRequireDefault(_unionType);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var T = function T() {
+  return true;
+};
+
+var UpdateResult = exports.UpdateResult = (0, _unionType2.default)({
+  Pure: [T],
+  WithEffects: [T, T]
+});
+
+var pure = exports.pure = function pure(v) {
+  return UpdateResult.Pure(v);
+};
+var withEffects = exports.withEffects = function withEffects(v, ef) {
+  return UpdateResult.WithEffects(v, ef);
+};
+
+},{"union-type":22}],4:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _unionType = require('union-type');
+
+var _unionType2 = _interopRequireDefault(_unionType);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var Result = (0, _unionType2.default)({
+  Ok: [String],
+  Error: [String]
+});
+
+exports.default = Result;
+
+},{"union-type":22}],5:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _users = require('./users');
+
+var users = _interopRequireWildcard(_users);
+
+var _Result = require('./Result');
+
+var _Result2 = _interopRequireDefault(_Result);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+var makeApiCall = function makeApiCall(method) {
+  return function () {
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    return new Promise(function (res, rej) {
+      setTimeout(function () {
+        _Result2.default.case({
+          Ok: res,
+          Error: rej
+        }, method.apply(undefined, args));
+      }, 200);
+    });
+  };
+};
+
+var obj = {};
+for (var key in users) {
+  obj[key] = makeApiCall(users[key]);
+}
+
+exports.default = obj;
+
+},{"./Result":4,"./users":7}],6:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _api = require('./api');
+
+var _api2 = _interopRequireDefault(_api);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+exports.default = _api2.default;
+
+},{"./api":5}],7:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getUsers = getUsers;
+exports.login = login;
+exports.addUser = addUser;
+exports.updateUser = updateUser;
+exports.removeUser = removeUser;
+
+var _Result = require('./Result');
+
+var _Result2 = _interopRequireDefault(_Result);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var users = [{ name: 'admin', password: 'admin', admin: true }, { name: 'guest', password: 'guest' }];
+
+function isDuplicate(name, exceptIdx) {
+  return users.some(function (user, idx) {
+    return user.name === name && idx !== exceptIdx;
+  });
+}
+
+function getUsers() {
+  return users.slice(1);
+}
+
+function login(name, password) {
+  var user = users.find(function (user) {
+    return user.name === name && user.password === password;
+  });
+  return user ? _Result2.default.Ok('') : _Result2.default.Error('Invalid username/password');
+}
+
+function addUser(name, password, admin) {
+  if (!isDuplicate(name)) {
+    users.push({ name: name, password: password, admin: admin });
+    return _Result2.default.Ok('' + users.length);
+  } else {
+    return _Result2.default.Error('Duplicate user');
+  }
+}
+
+function updateUser(user) {
+  var idx = users.findIndex(function (u) {
+    return u.name === user.name;
+  });
+  if (idx < 0) return _Result2.default.Error('Invalid user id');else if (isDuplicate(user.name, idx)) return _Result2.default.Error('Duplicate user name');else {
+    users[idx] = user;
+    return _Result2.default.Ok('');
+  }
+}
+
+function removeUser(user) {
+  var idx = users.findIndex(function (u) {
+    return u.name === user.name;
+  });
+  if (idx < 0) return _Result2.default.Error('Unkown user!');
+
+  if (idx === 0) return _Result2.default.Error('Can not remove this one!');else {
+    users.splice(idx, 1);
+    return _Result2.default.Ok();
+  }
+}
+
+},{"./Result":4}],8:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.dispatch = dispatch;
 
 var _snabbdomJsx = require('snabbdom-jsx');
 
@@ -208,15 +398,19 @@ var _snabbdom = require('snabbdom');
 
 var _snabbdom2 = _interopRequireDefault(_snabbdom);
 
+var _UpdateResult = require('./UpdateResult');
+
 var _Login = require('./Login');
 
 var _Login2 = _interopRequireDefault(_Login);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var patch = _snabbdom2.default.init([require('snabbdom/modules/class'), require('snabbdom/modules/props'), require('snabbdom/modules/style'), require('snabbdom/modules/eventlisteners')]); /** @jsx html */
+/** @jsx html */
 
-var state = _Login2.default.init(),
+var patch = _snabbdom2.default.init([require('snabbdom/modules/class'), require('snabbdom/modules/props'), require('snabbdom/modules/style'), require('snabbdom/modules/eventListeners')]);
+
+var state,
     vnode = document.getElementById('placeholder');
 
 function updateUI() {
@@ -224,14 +418,31 @@ function updateUI() {
   vnode = patch(vnode, newVnode);
 }
 
-function dispatch(action) {
-  state = _Login2.default.update(state, action, dispatch);
+function updateStatePure(newState) {
+  state = newState;
   updateUI();
 }
 
-updateUI();
+function updateStateWithEffect(newState, effect) {
+  updateStatePure(newState);
+  _Login2.default.execute(state, effect, dispatch);
+}
 
-},{"./Login":1,"snabbdom":15,"snabbdom-jsx":9,"snabbdom/modules/class":11,"snabbdom/modules/eventlisteners":12,"snabbdom/modules/props":13,"snabbdom/modules/style":14}],4:[function(require,module,exports){
+function handleUpdateResult(updateResult) {
+  _UpdateResult.UpdateResult.case({
+    Pure: updateStatePure,
+    WithEffects: updateStateWithEffect
+  }, updateResult);
+}
+
+function dispatch(action) {
+  var updateResult = _Login2.default.update(state, action);
+  handleUpdateResult(updateResult);
+}
+
+handleUpdateResult(_Login2.default.init());
+
+},{"./Login":1,"./UpdateResult":3,"snabbdom":20,"snabbdom-jsx":14,"snabbdom/modules/class":16,"snabbdom/modules/eventListeners":17,"snabbdom/modules/props":18,"snabbdom/modules/style":19}],9:[function(require,module,exports){
 var _curry2 = require('./internal/_curry2');
 
 
@@ -280,7 +491,7 @@ module.exports = _curry2(function(n, fn) {
   }
 });
 
-},{"./internal/_curry2":7}],5:[function(require,module,exports){
+},{"./internal/_curry2":12}],10:[function(require,module,exports){
 var _curry2 = require('./internal/_curry2');
 var _curryN = require('./internal/_curryN');
 var arity = require('./arity');
@@ -333,7 +544,7 @@ module.exports = _curry2(function curryN(length, fn) {
   return arity(length, _curryN(length, [], fn));
 });
 
-},{"./arity":4,"./internal/_curry2":7,"./internal/_curryN":8}],6:[function(require,module,exports){
+},{"./arity":9,"./internal/_curry2":12,"./internal/_curryN":13}],11:[function(require,module,exports){
 /**
  * Optimized internal two-arity curry function.
  *
@@ -354,7 +565,7 @@ module.exports = function _curry1(fn) {
   };
 };
 
-},{}],7:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 var _curry1 = require('./_curry1');
 
 
@@ -388,7 +599,7 @@ module.exports = function _curry2(fn) {
   };
 };
 
-},{"./_curry1":6}],8:[function(require,module,exports){
+},{"./_curry1":11}],13:[function(require,module,exports){
 var arity = require('../arity');
 
 
@@ -428,7 +639,7 @@ module.exports = function _curryN(length, received, fn) {
   };
 };
 
-},{"../arity":4}],9:[function(require,module,exports){
+},{"../arity":9}],14:[function(require,module,exports){
 "use strict";
 
 var SVGNS = "http://www.w3.org/2000/svg";
@@ -502,13 +713,13 @@ module.exports = {
   JSX: JSX 
 };
 
-},{}],10:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 module.exports = {
   array: Array.isArray,
   primitive: function(s) { return typeof s === 'string' || typeof s === 'number'; },
 };
 
-},{}],11:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 function updateClass(oldVnode, vnode) {
   var cur, name, elm = vnode.elm,
       oldClass = oldVnode.data.class || {},
@@ -523,7 +734,7 @@ function updateClass(oldVnode, vnode) {
 
 module.exports = {create: updateClass, update: updateClass};
 
-},{}],12:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var is = require('../is');
 
 function arrInvoker(arr) {
@@ -566,7 +777,7 @@ function updateEventListeners(oldVnode, vnode) {
 
 module.exports = {create: updateEventListeners, update: updateEventListeners};
 
-},{"../is":10}],13:[function(require,module,exports){
+},{"../is":15}],18:[function(require,module,exports){
 function updateProps(oldVnode, vnode) {
   var key, cur, old, elm = vnode.elm,
       oldProps = oldVnode.data.props || {}, props = vnode.data.props || {};
@@ -581,7 +792,7 @@ function updateProps(oldVnode, vnode) {
 
 module.exports = {create: updateProps, update: updateProps};
 
-},{}],14:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var raf = requestAnimationFrame || setTimeout;
 var nextFrame = function(fn) { raf(function() { raf(fn); }); };
 
@@ -642,7 +853,7 @@ function applyRemoveStyle(vnode, rm) {
 
 module.exports = {create: updateStyle, update: updateStyle, destroy: applyDestroyStyle, remove: applyRemoveStyle};
 
-},{}],15:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 // jshint newcap: false
 /* global require, module, document, Element */
 'use strict';
@@ -877,14 +1088,14 @@ function init(modules) {
 
 module.exports = {init: init};
 
-},{"./is":10,"./vnode":16}],16:[function(require,module,exports){
+},{"./is":15,"./vnode":21}],21:[function(require,module,exports){
 module.exports = function(sel, data, children, text, elm) {
   var key = data === undefined ? undefined : data.key;
   return {sel: sel, data: data, children: children,
           text: text, elm: elm, key: key};
 };
 
-},{}],17:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 var curryN = require('ramda/src/curryN');
 
 function isString(s) { return typeof s === 'string'; }
@@ -954,4 +1165,4 @@ function Type(desc) {
 
 module.exports = Type;
 
-},{"ramda/src/curryN":5}]},{},[3]);
+},{"ramda/src/curryN":10}]},{},[8]);

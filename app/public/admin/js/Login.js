@@ -3,7 +3,8 @@
 import { html } from 'snabbdom-jsx';
 import Type from 'union-type';
 import Status from './RequestStatus';
-import { login } from './api';
+import { pure, withEffects } from './UpdateResult';
+import api from './api';
 
 /*
   state: {
@@ -16,9 +17,12 @@ import { login } from './api';
 const Action = Type({
   Name        : [String],
   Password    : [String],
-  LoginStart  : [],
-  LoginSuccess: [Object],
-  LoginError  : [Object]
+  Login       : [],
+  LoginError  : [String]
+});
+
+const Effect = Type({
+  Login : []
 });
 
 function onInput(dispatch, action) {
@@ -28,12 +32,15 @@ function onInput(dispatch, action) {
 function onSubmit(dispatch) {
   return e => {
     e.preventDefault();
-    dispatch(Action.LoginStart());
+    dispatch(Action.Login());
     return false;
   }
 }
 
-const view = ({state: {name, password, status}, dispatch}) =>
+const view = ({
+  state: {name, password, status},
+  dispatch
+}) =>
   <div classNames="login">
     <form on-submit={onSubmit(dispatch)}>
       <h1>Login</h1>
@@ -60,35 +67,43 @@ const view = ({state: {name, password, status}, dispatch}) =>
   </div>
 
 const statusMsg = Status.case({
-  Empty   : ()    => '',
-  Pending : ()    => 'Logging in ...',
-  Success : msg   => 'Login Successfull',
+  Empty   : () => '',
+  Pending : () => 'Logging in ...',
+  Success : () => 'Login Successfull',
   Error   : error => error
 });
 
 
 function init() {
-  return { name: '', password: '', status: Status.Empty() };
+  return pure({ name: '', password: '', status: Status.Empty() });
 }
 
 
-function save(state, dispatch) {
-  login(state.name, state.password)
-  .then( _ => window.location.hash = '/admin')
-  .catch(err => dispatch(Action.LoginError(err)))
-
-  return { ...state, status: Status.Pending()};
+function login(state, dispatch) {
+  api.login(state.name, state.password)
+     .then(() => window.location.hash = '/admin')
+     .catch( err => dispatch(Action.LoginError(err)));
 }
 
-function update(state, action, dispatch) {
+function update(state, action) {
   return  Action.case({
     // Input actions
-    Name          : name      => ({ ...state, name }),
-    Password      : password  => ({ ...state, password }),
-    // Login Request actions
-    LoginStart    : ()        => save(state, dispatch),
-    LoginError    : ({error}) => ({ ...state, status: Status.Error(error) })
+    Name : name => pure({ ...state, name }),
+    Password : password => pure({ ...state, password }),
+
+    // Request actions
+    Login : () => withEffects(
+                    { ...state, status: Status.Pending()},
+                    Effect.Login()
+                  ),
+    LoginError : (error) => pure({ ...state, status: Status.Error(error) })
   }, action);
 }
 
-export default { init, view, update, Action };
+function execute(state, effect, dispatch) {
+  Effect.case({
+    Login : () => login(state, dispatch)
+  }, effect)
+}
+
+export default { view, init, update, Action, execute, Effect };

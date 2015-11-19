@@ -2,17 +2,18 @@
 
 import { html } from 'snabbdom-jsx';
 import snabbdom from 'snabbdom';
+import { UpdateResult } from './updateResult';
 import App from './Counter';
 
 const patch = snabbdom.init([
   require('snabbdom/modules/class'),
   require('snabbdom/modules/props'),
   require('snabbdom/modules/style'),
-  require('snabbdom/modules/eventlisteners'),
+  require('snabbdom/modules/eventListeners')
 ]);
 
 
-var state = App.init(),
+var state,
     vnode = document.getElementById('placeholder');
 
 function updateUI() {
@@ -20,9 +21,26 @@ function updateUI() {
   vnode = patch(vnode, newVnode);
 }
 
-function dispatch(action) {
-  state = App.update(state, action);
+function updateStatePure(newState) {
+  state = newState;
   updateUI();
 }
 
-updateUI();
+function updateStateWithEffect(newState, effect) {
+  updateStatePure(newState);
+  App.execute(state, effect, dispatch);
+}
+
+function handleUpdateResult(updateResult) {
+  UpdateResult.case({
+    Pure        : updateStatePure,
+    WithEffects : updateStateWithEffect
+  }, updateResult);
+}
+
+export function dispatch(action) {
+  const updateResult = App.update(state, action);
+  handleUpdateResult(updateResult);
+}
+
+handleUpdateResult(App.init());

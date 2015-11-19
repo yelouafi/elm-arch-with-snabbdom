@@ -1,8 +1,6 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; /** @jsx html */
-
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -15,378 +13,188 @@ var _unionType2 = _interopRequireDefault(_unionType);
 
 var _UpdateResult = require('./UpdateResult');
 
-var _Login = require('./Login');
-
-var _Login2 = _interopRequireDefault(_Login);
-
-var _UserList = require('./UserList');
-
-var _UserList2 = _interopRequireDefault(_UserList);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-/*
-  state: {
-    { route1: component1, ...}
-    currentRoute: String,
-    currentState: Object
-  }
-*/
-
-var DEFAULT_ROUTE = '/login';
-var routes = {
-  '/login': _Login2.default,
-  '/admin': _UserList2.default
-};
-var T = function T() {
-  return true;
-};
-
 var Action = (0, _unionType2.default)({
-  Navigate: [String],
-  Update: [T]
-});
+  Increment: [],
+  Decrement: [],
+  IncrementLater: []
+}); /** @jsx html */
 
 var Effect = (0, _unionType2.default)({
-  Init: [T],
-  Child: [T]
+  IncrementAsync: []
 });
 
-function componentDispatcher(dispatch) {
-  return function (action) {
-    return dispatch(Action.Update(action));
-  };
-}
-
 var view = function view(_ref) {
-  var _ref$state = _ref.state;
-  var routes = _ref$state.routes;
-  var currentRoute = _ref$state.currentRoute;
-  var currentState = _ref$state.currentState;
+  var state = _ref.state;
   var dispatch = _ref.dispatch;
   return (0, _snabbdomJsx.html)(
     'div',
-    { classNames: 'view' },
-    routes[currentRoute].view({
-      state: currentState,
-      dispatch: componentDispatcher(dispatch)
-    })
-  );
-};
-
-function initPure(currentState) {
-  return {
-    routes: routes,
-    currentRoute: DEFAULT_ROUTE,
-    currentState: currentState
-  };
-}
-
-function init() {
-  var component = routes[DEFAULT_ROUTE],
-      result = component.init();
-
-  return _UpdateResult.UpdateResult.case({
-    Pure: function Pure(currentState) {
-      return (0, _UpdateResult.withEffects)(initPure(currentState), Effect.Init(null));
-    },
-    WithEffects: function WithEffects(currentState, eff) {
-      return (0, _UpdateResult.withEffects)(initPure(currentState), Effect.Init(eff));
-    }
-  }, result);
-}
-
-function navigatePure(state, currentRoute, currentState) {
-  return _extends({}, state, {
-    currentRoute: currentRoute,
-    currentState: currentState
-  });
-}
-
-function navigate(state, currentRoute) {
-  var component = state.routes[currentRoute] || DEFAULT_ROUTE,
-      result = component.init();
-
-  return _UpdateResult.UpdateResult.case({
-    Pure: function Pure(currentState) {
-      return (0, _UpdateResult.pure)(navigatePure(state, currentRoute, currentState));
-    },
-    WithEffects: function WithEffects(currentState, eff) {
-      return (0, _UpdateResult.withEffects)(navigatePure(state, currentRoute, currentState), Effect.Child(eff));
-    }
-  }, result);
-}
-
-function updateComponentPure(state, currentState) {
-  return _extends({}, state, { currentState: currentState });
-}
-
-function updateComponent(state, action) {
-  var component = state.routes[state.currentRoute],
-      result = component.update(state.currentState, action);
-
-  return _UpdateResult.UpdateResult.case({
-    Pure: function Pure(currentState) {
-      return (0, _UpdateResult.pure)(updateComponentPure(state, currentState));
-    },
-    WithEffects: function WithEffects(currentState, eff) {
-      return (0, _UpdateResult.withEffects)(updateComponentPure(state, currentState), Effect.Child(eff));
-    }
-  }, result);
-}
-
-function update(state, action) {
-  return Action.case({
-    Navigate: function Navigate(route) {
-      return navigate(state, route);
-    },
-    Update: function Update(componentAction) {
-      return updateComponent(state, componentAction);
-    }
-  }, action);
-}
-
-function executeInit(state, childEff, dispatch) {
-  window.addEventListener('hashchange', function () {
-    return dispatch(Action.Navigate(window.location.hash.substr(1) || DEFAULT_ROUTE));
-  });
-
-  if (childEff) {
-    var component = state.routes[state.currentRoute];
-    component.execute(state.currentState, childEff, componentDispatcher(dispatch));
-  }
-}
-
-function execute(state, effect, dispatch) {
-  Effect.case({
-    Init: function Init(childEff) {
-      return executeInit(state, childEff, dispatch);
-    },
-    Child: function Child(eff) {
-      var component = state.routes[state.currentRoute];
-      component.execute(state.currentState, eff, componentDispatcher(dispatch));
-    }
-  }, effect);
-}
-
-exports.default = { view: view, init: init, update: update, Action: Action, execute: execute, Effect: Effect };
-
-},{"./Login":2,"./UpdateResult":4,"./UserList":6,"snabbdom-jsx":17,"union-type":25}],2:[function(require,module,exports){
-'use strict';
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; /** @jsx html */
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _snabbdomJsx = require('snabbdom-jsx');
-
-var _unionType = require('union-type');
-
-var _unionType2 = _interopRequireDefault(_unionType);
-
-var _RequestStatus = require('./RequestStatus');
-
-var _RequestStatus2 = _interopRequireDefault(_RequestStatus);
-
-var _UpdateResult = require('./UpdateResult');
-
-var _api = require('./api');
-
-var _api2 = _interopRequireDefault(_api);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-/*
-  state: {
-    name      : String, current username input
-    password  : String, current paswword input
-    status    : Status, status of the last request
-  }
-*/
-
-var Action = (0, _unionType2.default)({
-  Name: [String],
-  Password: [String],
-  Login: [],
-  LoginError: [String]
-});
-
-var Effect = (0, _unionType2.default)({
-  Login: []
-});
-
-function onInput(dispatch, action) {
-  return function (e) {
-    return dispatch(action(e.target.value));
-  };
-}
-
-function onSubmit(dispatch) {
-  return function (e) {
-    e.preventDefault();
-    dispatch(Action.Login());
-    return false;
-  };
-}
-
-var view = function view(_ref) {
-  var _ref$state = _ref.state;
-  var name = _ref$state.name;
-  var password = _ref$state.password;
-  var status = _ref$state.status;
-  var dispatch = _ref.dispatch;
-  return (0, _snabbdomJsx.html)(
-    'div',
-    { classNames: 'login' },
+    null,
     (0, _snabbdomJsx.html)(
-      'form',
-      { 'on-submit': onSubmit(dispatch) },
-      (0, _snabbdomJsx.html)(
-        'h1',
-        null,
-        'Login'
-      ),
-      (0, _snabbdomJsx.html)('input', { classNames: 'name',
-        type: 'text',
-        placeholder: 'User name',
-        value: name,
-        'on-input': onInput(dispatch, Action.Name) }),
-      (0, _snabbdomJsx.html)('input', { classNames: 'password',
-        type: 'password',
-        placeholder: 'Password',
-        value: password,
-        'on-input': onInput(dispatch, Action.Password) }),
-      (0, _snabbdomJsx.html)(
-        'div',
-        { classNames: 'status',
-          'class-success': _RequestStatus2.default.isSuccess(status),
-          'class-error': _RequestStatus2.default.isError(status)
-        },
-        statusMsg(status)
-      ),
-      (0, _snabbdomJsx.html)(
-        'button',
-        { disabled: _RequestStatus2.default.isPending(status) },
-        'Sign in'
-      )
+      'button',
+      { 'on-click': [dispatch, Action.Increment()] },
+      '+'
     ),
-    ';'
+    (0, _snabbdomJsx.html)(
+      'div',
+      null,
+      state
+    ),
+    (0, _snabbdomJsx.html)(
+      'button',
+      { 'on-click': [dispatch, Action.Decrement()] },
+      '-'
+    ),
+    (0, _snabbdomJsx.html)(
+      'button',
+      { 'on-click': [dispatch, Action.IncrementLater()] },
+      '+ (Async)'
+    )
   );
 };
 
-var statusMsg = _RequestStatus2.default.case({
-  Empty: function Empty() {
-    return '';
-  },
-  Pending: function Pending() {
-    return 'Logging in ...';
-  },
-  Success: function Success() {
-    return 'Login Successfull';
-  },
-  Error: function Error(error) {
-    return error;
-  }
-});
+var init = function init() {
+  return (0, _UpdateResult.pure)(0);
+};
 
-function init() {
-  return (0, _UpdateResult.pure)({ name: '', password: '', status: _RequestStatus2.default.Empty() });
-}
-
-function login(state, dispatch) {
-  _api2.default.login(state.name, state.password).then(function () {
-    return window.location.hash = '/admin';
-  }).catch(function (err) {
-    return dispatch(Action.LoginError(err));
-  });
-}
-
-function update(state, action) {
+var update = function update(state, action) {
   return Action.case({
-    // Input actions
-    Name: function Name(name) {
-      return (0, _UpdateResult.pure)(_extends({}, state, { name: name }));
+    Increment: function Increment() {
+      return (0, _UpdateResult.pure)(state + 1);
     },
-    Password: function Password(password) {
-      return (0, _UpdateResult.pure)(_extends({}, state, { password: password }));
+    Decrement: function Decrement() {
+      return (0, _UpdateResult.pure)(state - 1);
     },
-
-    // Request actions
-    Login: function Login() {
-      return (0, _UpdateResult.withEffects)(_extends({}, state, { status: _RequestStatus2.default.Pending() }), Effect.Login());
-    },
-    LoginError: function LoginError(error) {
-      return (0, _UpdateResult.pure)(_extends({}, state, { status: _RequestStatus2.default.Error(error) }));
+    IncrementLater: function IncrementLater() {
+      return (0, _UpdateResult.withEffects)(state, Effect.IncrementAsync());
     }
   }, action);
-}
+};
 
-function execute(state, effect, dispatch) {
-  Effect.case({
-    Login: function Login() {
-      return login(state, dispatch);
+var execute = function execute(state, effect, dispatch) {
+  return Effect.case({
+    IncrementAsync: function IncrementAsync() {
+      return setTimeout(function () {
+        return dispatch(Action.Increment());
+      }, 1000);
     }
   }, effect);
-}
+};
 
-exports.default = { view: view, init: init, update: update, Action: Action, execute: execute, Effect: Effect };
+exports.default = { init: init, update: update, execute: execute, view: view, Action: Action, Effect: Effect };
 
-},{"./RequestStatus":3,"./UpdateResult":4,"./api":9,"snabbdom-jsx":17,"union-type":25}],3:[function(require,module,exports){
+},{"./UpdateResult":3,"snabbdom-jsx":10,"union-type":18}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _snabbdomJsx = require('snabbdom-jsx');
+
+var _Counter2 = require('./Counter');
+
+var _Counter3 = _interopRequireDefault(_Counter2);
+
 var _unionType = require('union-type');
 
 var _unionType2 = _interopRequireDefault(_unionType);
 
+var _UpdateResult = require('./UpdateResult');
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var T = function T() {
-  return true;
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } } /** @jsx html */
+
+var Action = (0, _unionType2.default)({
+  Add: [],
+  Update: [Number, _Counter3.default.Action]
+});
+
+var Effect = (0, _unionType2.default)({
+  Counter: [Number, _Counter3.default.Effect]
+});
+
+var view = function view(_ref) {
+  var state = _ref.state;
+  var dispatch = _ref.dispatch;
+  return (0, _snabbdomJsx.html)(
+    'div',
+    null,
+    (0, _snabbdomJsx.html)(
+      'button',
+      { 'on-click': [dispatch, Action.Add()] },
+      'Add'
+    ),
+    (0, _snabbdomJsx.html)('hr', null),
+    (0, _snabbdomJsx.html)(
+      'div',
+      null,
+      state.map(function (item, idx) {
+        return (0, _snabbdomJsx.html)(_Counter3.default, { state: item, dispatch: dispatch.map(Action.Update(idx)) });
+      })
+    )
+  );
 };
 
-var Status = (0, _unionType2.default)({
-  Empty: [],
-  Pending: [],
-  Success: [T],
-  Error: [T]
-});
+var init = function init() {
+  return (0, _UpdateResult.pure)([]);
+};
 
-Status.isPending = Status.case({
-  Pending: function Pending() {
-    return true;
-  },
-  _: function _() {
-    return false;
-  }
-});
+var addPure = function addPure(state, v) {
+  return [].concat(_toConsumableArray(state), [v]);
+};
+var updatePure = function updatePure(state, v, idx) {
+  return state.map(function (item, i) {
+    return i === idx ? v : item;
+  });
+};
 
-Status.isSuccess = Status.case({
-  Success: function Success() {
-    return true;
-  },
-  _: function _() {
-    return false;
-  }
-});
+function addCounter(state) {
+  return _UpdateResult.UpdateResult.case({
+    Pure: function Pure(v) {
+      return (0, _UpdateResult.pure)(addPure(state, v));
+    },
+    WithEffects: function WithEffects(v, eff) {
+      return (0, _UpdateResult.withEffects)(addPure(state, v), Effect.Counter(state.length, eff));
+    }
+  }, _Counter3.default.init());
+}
 
-Status.isError = Status.case({
-  Error: function Error() {
-    return true;
-  },
-  _: function _() {
-    return false;
-  }
-});
+function updateCounter(state, idx, action) {
+  return _UpdateResult.UpdateResult.case({
+    Pure: function Pure(v) {
+      return (0, _UpdateResult.pure)(updatePure(state, v, idx));
+    },
+    WithEffects: function WithEffects(v, eff) {
+      return (0, _UpdateResult.withEffects)(updatePure(state, v, idx), Effect.Counter(idx, eff));
+    }
+  }, _Counter3.default.update(state[idx], action));
+}
 
-exports.default = Status;
+var update = function update(state, action) {
+  return Action.case({
+    Add: function Add() {
+      return addCounter(state);
+    },
+    Update: function Update(idx, action) {
+      return updateCounter(state, idx, action);
+    }
+  }, action);
+};
 
-},{"union-type":25}],4:[function(require,module,exports){
+var execute = function execute(state, effect, dispatch) {
+  return Effect.case({
+    Counter: function Counter(idx, counterEffect) {
+      return _Counter3.default.execute(state[idx], counterEffect, dispatch.map(Action.Update(idx)));
+    }
+  }, effect);
+};
+
+exports.default = { view: view, init: init, update: update, execute: execute, Action: Action, Effect: Effect };
+
+},{"./Counter":1,"./UpdateResult":3,"snabbdom-jsx":10,"union-type":18}],3:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -412,536 +220,12 @@ var UpdateResult = exports.UpdateResult = (0, _unionType2.default)({
 var pure = exports.pure = function pure(v) {
   return UpdateResult.Pure(v);
 };
-var withEffects = exports.withEffects = function withEffects(v, effect) {
-  return UpdateResult.WithEffects(v, effect);
+var withEffects = exports.withEffects = function withEffects(v, ef) {
+  return UpdateResult.WithEffects(v, ef);
 };
 
-},{"union-type":25}],5:[function(require,module,exports){
+},{"union-type":18}],4:[function(require,module,exports){
 'use strict';
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; /** @jsx html */
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _snabbdomJsx = require('snabbdom-jsx');
-
-var _unionType = require('union-type');
-
-var _unionType2 = _interopRequireDefault(_unionType);
-
-var _RequestStatus = require('./RequestStatus');
-
-var _RequestStatus2 = _interopRequireDefault(_RequestStatus);
-
-var _UpdateResult = require('./UpdateResult');
-
-var _api = require('./api');
-
-var _api2 = _interopRequireDefault(_api);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-/*
-  state: {
-  id      : Number, stored id
-  name      : String, current username input
-  password  : String, current paswword input
-  status  : Status, status of the last request
-  }
-*/
-
-var Action = (0, _unionType2.default)({
-  Name: [String],
-  Password: [String],
-  Save: [],
-  SaveSuccess: [Object], // {id}
-  SaveError: [Object] // {error}
-});
-
-var Effect = (0, _unionType2.default)({
-  Save: []
-});
-
-function onInput(dispatch, action) {
-  return function (e) {
-    return dispatch(action(e.target.value));
-  };
-}
-
-function onSubmit(dispatch) {
-  return function (e) {
-    e.preventDefault();
-    dispatch(Action.SaveStart());
-    return false;
-  };
-}
-
-var view = function view(_ref) {
-  var _ref$state = _ref.state;
-  var id = _ref$state.id;
-  var name = _ref$state.name;
-  var password = _ref$state.password;
-  var status = _ref$state.status;
-  var dispatch = _ref.dispatch;
-  return (0, _snabbdomJsx.html)(
-    'form',
-    { 'on-submit': onSubmit(dispatch) },
-    (0, _snabbdomJsx.html)('input', {
-      type: 'text',
-      placeholder: 'User name',
-      value: name,
-      'on-input': onInput(dispatch, Action.Name) }),
-    (0, _snabbdomJsx.html)('input', {
-      type: 'password',
-      placeholder: 'Password',
-      value: password,
-      'on-input': onInput(dispatch, Action.Password) }),
-    (0, _snabbdomJsx.html)(
-      'button',
-      {
-        disabled: _RequestStatus2.default.isPending(status),
-        'on-click': [dispatch, Action.SaveStart()] },
-      id ? 'Update' : 'Add'
-    ),
-    (0, _snabbdomJsx.html)(
-      'span',
-      { classNames: 'status',
-        'class-success': _RequestStatus2.default.isSuccess(status),
-        'class-error': _RequestStatus2.default.isError(status) },
-      statusMsg(status)
-    )
-  );
-};
-
-var statusMsg = _RequestStatus2.default.case({
-  Empty: function Empty() {
-    return '';
-  },
-  Pending: function Pending() {
-    return 'Saving user...';
-  },
-  Success: function Success(id) {
-    return 'User ' + id + ' saved with success';
-  },
-  Error: function Error(error) {
-    return 'Error! ' + error;
-  }
-});
-
-function init() {
-  var user = arguments.length <= 0 || arguments[0] === undefined ? { name: '', password: '' } : arguments[0];
-
-  return (0, _UpdateResult.pure)(_extends({}, user, { status: _RequestStatus2.default.Empty() }));
-}
-
-function save(state, dispatch) {
-  var save = state.id ? _api2.default.addUser : _api2.default.updateUser;
-  var data = { id: state.id, name: state.name, password: state.password };
-  return save(data).then(Action.SaveSuccess, Action.SaveError).then(dispatch);
-}
-
-function update(state, action) {
-  return Action.case({
-    // Input Actions
-    Name: function Name(name) {
-      return (0, _UpdateResult.pure)(_extends({}, state, { name: name }));
-    },
-    Password: function Password(password) {
-      return (0, _UpdateResult.pure)(_extends({}, state, { password: password }));
-    },
-    // Save Request Actions
-    Save: function Save() {
-      return (0, _UpdateResult.withEffects)(_extends({}, state, { status: _RequestStatus2.default.Pending() }), Effect.Save());
-    },
-    SaveSuccess: function SaveSuccess(id) {
-      return (0, _UpdateResult.pure)(_extends({}, state, { id: id, status: _RequestStatus2.default.Success(id) }));
-    },
-    SaveError: function SaveError(error) {
-      return (0, _UpdateResult.pure)(_extends({}, state, { status: _RequestStatus2.default.Error(error) }));
-    }
-  }, action);
-}
-
-function execute(state, effect, dispatch) {
-  Effect.case({
-    Save: function Save() {
-      return save(state, dispatch);
-    }
-  }, effect);
-}
-
-exports.default = { view: view, init: init, update: update, Action: Action, execute: execute, Effect: Effect };
-
-},{"./RequestStatus":3,"./UpdateResult":4,"./api":9,"snabbdom-jsx":17,"union-type":25}],6:[function(require,module,exports){
-'use strict';
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; /** @jsx html */
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _snabbdomJsx = require('snabbdom-jsx');
-
-var _unionType = require('union-type');
-
-var _unionType2 = _interopRequireDefault(_unionType);
-
-var _UserForm2 = require('./UserForm');
-
-var _UserForm3 = _interopRequireDefault(_UserForm2);
-
-var _RequestStatus = require('./RequestStatus');
-
-var _RequestStatus2 = _interopRequireDefault(_RequestStatus);
-
-var _UpdateResult = require('./UpdateResult');
-
-var _api = require('./api');
-
-var _api2 = _interopRequireDefault(_api);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
-
-/*
-  state: {
-    items   : [{id: Number, user: UserForm}],
-    nextId  : Number,
-    status  : Status
-  }
-*/
-
-var Action = (0, _unionType2.default)({
-  Add: [],
-  Update: [Number, _UserForm3.default.Action],
-  GetUsers: [],
-  GetUsersSuccess: [Array],
-  GetUsersError: [Object]
-});
-
-var Effect = (0, _unionType2.default)({
-  GetUsers: [],
-  UserForm: [Number, _UserForm3.default.Effect]
-});
-
-function userDispatcher(id, dispatch) {
-  return function (action) {
-    return dispatch(Action.Update(id, action));
-  };
-}
-
-var view = function view(_ref) {
-  var state = _ref.state;
-  var dispatch = _ref.dispatch;
-  return (0, _snabbdomJsx.html)(
-    'div',
-    { classNames: 'admin' },
-    (0, _snabbdomJsx.html)(
-      'button',
-      { 'on-click': [dispatch, Action.Add()] },
-      'Add'
-    ),
-    (0, _snabbdomJsx.html)(
-      'span',
-      null,
-      statusMsg(state.status)
-    ),
-    (0, _snabbdomJsx.html)('hr', null),
-    (0, _snabbdomJsx.html)(
-      'div',
-      null,
-      state.items.map(function (item) {
-        return (0, _snabbdomJsx.html)(UserItem, { item: item, dispatch: dispatch });
-      })
-    )
-  );
-};
-
-var UserItem = function UserItem(_ref2) {
-  var item = _ref2.item;
-  var dispatch = _ref2.dispatch;
-  return (0, _snabbdomJsx.html)(
-    'div',
-    { key: item.id, classNames: 'item' },
-    (0, _snabbdomJsx.html)(_UserForm3.default, { state: item.user, dispatch: userDispatcher(item.id, dispatch) })
-  );
-};
-
-var statusMsg = _RequestStatus2.default.case({
-  Pending: function Pending() {
-    return 'Getting user list...';
-  },
-  Error: function Error(error) {
-    return 'Error! ' + error;
-  },
-  _: function _() {
-    return '';
-  }
-});
-
-function receiveUsers(state, users) {
-  var items = users.map(function (user, idx) {
-    return { id: idx + 1, user: user };
-  });
-  return (0, _UpdateResult.pure)({
-    items: items,
-    nextId: items.length + 1,
-    status: _RequestStatus2.default.Success('')
-  });
-}
-
-function getUsers(dispatch) {
-  _api2.default.getUsers().then(Action.GetUsersSuccess, Action.GetUsersError).then(dispatch);
-}
-
-function addUserPure(state, user) {
-  return _extends({}, state, {
-    users: [].concat(_toConsumableArray(state.users), [{ id: state.nextId, user: user }]),
-    nextId: state.nextId + 1
-  });
-}
-
-function addUser(state) {
-  var result = _UserForm3.default.init();
-  return _UpdateResult.UpdateResult.case({
-    Pure: function Pure(user) {
-      return (0, _UpdateResult.pure)(addUserPure(state, user));
-    },
-    WithEffects: function WithEffects(user, eff) {
-      var state = addUserPure(state, user);
-      return (0, _UpdateResult.withEffects)(state, Effect.UserForm(state.nextId - 1, eff));
-    }
-  }, result);
-}
-
-function updateUserPure(state, user, id) {
-  return _extends({}, state, {
-    items: state.items.map(function (it) {
-      return it.id !== id ? it : { id: it.id, user: user };
-    })
-  });
-}
-
-function updateUser(state, id, userAction) {
-  var item = state.items.find(function (it) {
-    return it.id === id;
-  });
-  if (item) {
-    var result = _UserForm3.default.update(item.user, userAction);
-    return _UpdateResult.UpdateResult.case({
-      Pure: function Pure(user) {
-        return (0, _UpdateResult.pure)(updateUserPure(state, user, id));
-      },
-      WithEffects: function WithEffects(user, eff) {
-        var state = updateUserPure(state, user, id);
-        return (0, _UpdateResult.withEffects)(state, Effect.UserForm(id, eff));
-      }
-    }, result);
-  }
-  return (0, _UpdateResult.pure)(state);
-}
-
-var init = function init() {
-  return (0, _UpdateResult.withEffects)({ nextId: 1, items: [], status: _RequestStatus2.default.Pending() }, Effect.GetUsers());
-};
-
-function update(state, action) {
-  return Action.case({
-    Add: function Add() {
-      return addUser(state);
-    },
-    Update: function Update(id, userAction) {
-      return updateUser(state, id, userAction);
-    },
-    // GetUsers Request Actions
-    GetUsers: function GetUsers() {
-      return (0, _UpdateResult.withEffects)(_extends({}, state, { status: _RequestStatus2.default.Pending() }), Effect.GetUsers());
-    },
-    GetUsersSuccess: function GetUsersSuccess(users) {
-      return receiveUsers(state, users);
-    },
-    GetUsersError: function GetUsersError(error) {
-      return (0, _UpdateResult.pure)(_extends({}, state, { status: _RequestStatus2.default.Error(error) }));
-    }
-  }, action);
-}
-
-function execute(state, effect, dispatch) {
-  Effect.case({
-    GetUsers: function GetUsers() {
-      return getUsers(dispatch);
-    },
-    UserForm: function UserForm(id, eff) {
-      var item = state.items.find(function (it) {
-        return it.id === id;
-      });
-      if (item) _UserForm3.default.execute(item.user, eff, userDispatcher(dispatch, id));
-    }
-  }, effect);
-}
-
-exports.default = { init: init, view: view, update: update, Action: Action, execute: execute, Effect: Effect };
-
-},{"./RequestStatus":3,"./UpdateResult":4,"./UserForm":5,"./api":9,"snabbdom-jsx":17,"union-type":25}],7:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _unionType = require('union-type');
-
-var _unionType2 = _interopRequireDefault(_unionType);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var T = function T() {
-  return true;
-};
-var Result = (0, _unionType2.default)({
-  Ok: [T],
-  Error: [T]
-});
-
-exports.default = Result;
-
-},{"union-type":25}],8:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _users = require('./users');
-
-var users = _interopRequireWildcard(_users);
-
-var _Result = require('./Result');
-
-var _Result2 = _interopRequireDefault(_Result);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-var makeApiCall = function makeApiCall(method) {
-  return function () {
-    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
-    }
-
-    return new Promise(function (res, rej) {
-      setTimeout(function () {
-        _Result2.default.case({
-          Ok: res,
-          Error: rej
-        }, method.apply(undefined, args));
-      }, 200);
-    });
-  };
-};
-
-var obj = {};
-for (var key in users) {
-  obj[key] = makeApiCall(users[key]);
-}
-
-exports.default = obj;
-
-},{"./Result":7,"./users":10}],9:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _api = require('./api');
-
-var _api2 = _interopRequireDefault(_api);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-exports.default = _api2.default;
-
-},{"./api":8}],10:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.getUsers = getUsers;
-exports.login = login;
-exports.addUser = addUser;
-exports.updateUser = updateUser;
-exports.removeUser = removeUser;
-
-var _Result = require('./Result');
-
-var _Result2 = _interopRequireDefault(_Result);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var users = [{ name: 'admin', password: 'admin', admin: true }, { name: 'guest', password: 'guest' }];
-
-function isDuplicate(name, exceptIdx) {
-  return users.some(function (user, idx) {
-    return user.name === name && idx !== exceptIdx;
-  });
-}
-
-function getUsers() {
-  return _Result2.default.Ok(users.slice(1));
-}
-
-function login(name, password) {
-  var user = users.find(function (user) {
-    return user.name === name && user.password === password;
-  });
-  return user ? _Result2.default.Ok('') : _Result2.default.Error('Invalid username/password');
-}
-
-function addUser(name, password, admin) {
-  if (!isDuplicate(name)) {
-    users.push({ name: name, password: password, admin: admin });
-    return _Result2.default.Ok('' + users.length);
-  } else {
-    return _Result2.default.Error('Duplicate user');
-  }
-}
-
-function updateUser(user) {
-  var idx = users.findIndex(function (u) {
-    return u.name === user.name;
-  });
-  if (idx < 0) return _Result2.default.Error('Invalid user id');else if (isDuplicate(user.name, idx)) return _Result2.default.Error('Duplicate user name');else {
-    users[idx] = user;
-    return _Result2.default.Ok('');
-  }
-}
-
-function removeUser(user) {
-  var idx = users.findIndex(function (u) {
-    return u.name === user.name;
-  });
-  if (idx < 0) return _Result2.default.Error('Unkown user!');
-
-  if (idx === 0) return _Result2.default.Error('Can not remove this one!');else {
-    users.splice(idx, 1);
-    return _Result2.default.Ok();
-  }
-}
-
-},{"./Result":7}],11:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.dispatch = dispatch;
 
 var _snabbdomJsx = require('snabbdom-jsx');
 
@@ -951,9 +235,9 @@ var _snabbdom2 = _interopRequireDefault(_snabbdom);
 
 var _UpdateResult = require('./UpdateResult');
 
-var _App = require('./App');
+var _CounterList = require('./CounterList');
 
-var _App2 = _interopRequireDefault(_App);
+var _CounterList2 = _interopRequireDefault(_CounterList);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -965,7 +249,7 @@ var state,
     vnode = document.getElementById('placeholder');
 
 function updateUI() {
-  var newVnode = (0, _snabbdomJsx.html)(_App2.default, { state: state, dispatch: dispatch });
+  var newVnode = (0, _snabbdomJsx.html)(_CounterList2.default, { state: state, dispatch: dispatch });
   vnode = patch(vnode, newVnode);
 }
 
@@ -976,7 +260,7 @@ function updateStatePure(newState) {
 
 function updateStateWithEffect(newState, effect) {
   updateStatePure(newState);
-  _App2.default.execute(state, effect, dispatch);
+  _CounterList2.default.execute(state, effect, dispatch);
 }
 
 function handleUpdateResult(updateResult) {
@@ -987,13 +271,25 @@ function handleUpdateResult(updateResult) {
 }
 
 function dispatch(action) {
-  var updateResult = _App2.default.update(state, action);
+  var updateResult = _CounterList2.default.update(state, action);
   handleUpdateResult(updateResult);
 }
 
-handleUpdateResult(_App2.default.init());
+function mapDispatcher(context) {
+  var _this = this;
 
-},{"./App":1,"./UpdateResult":4,"snabbdom":23,"snabbdom-jsx":17,"snabbdom/modules/class":19,"snabbdom/modules/eventListeners":20,"snabbdom/modules/props":21,"snabbdom/modules/style":22}],12:[function(require,module,exports){
+  var newDisp = function newDisp(action) {
+    return _this(context(action));
+  };
+  newDisp.map = mapDispatcher;
+  return newDisp;
+}
+
+dispatch.map = mapDispatcher;
+
+handleUpdateResult(_CounterList2.default.init());
+
+},{"./CounterList":2,"./UpdateResult":3,"snabbdom":16,"snabbdom-jsx":10,"snabbdom/modules/class":12,"snabbdom/modules/eventListeners":13,"snabbdom/modules/props":14,"snabbdom/modules/style":15}],5:[function(require,module,exports){
 var _curry2 = require('./internal/_curry2');
 
 
@@ -1042,7 +338,7 @@ module.exports = _curry2(function(n, fn) {
   }
 });
 
-},{"./internal/_curry2":15}],13:[function(require,module,exports){
+},{"./internal/_curry2":8}],6:[function(require,module,exports){
 var _curry2 = require('./internal/_curry2');
 var _curryN = require('./internal/_curryN');
 var arity = require('./arity');
@@ -1095,7 +391,7 @@ module.exports = _curry2(function curryN(length, fn) {
   return arity(length, _curryN(length, [], fn));
 });
 
-},{"./arity":12,"./internal/_curry2":15,"./internal/_curryN":16}],14:[function(require,module,exports){
+},{"./arity":5,"./internal/_curry2":8,"./internal/_curryN":9}],7:[function(require,module,exports){
 /**
  * Optimized internal two-arity curry function.
  *
@@ -1116,7 +412,7 @@ module.exports = function _curry1(fn) {
   };
 };
 
-},{}],15:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var _curry1 = require('./_curry1');
 
 
@@ -1150,7 +446,7 @@ module.exports = function _curry2(fn) {
   };
 };
 
-},{"./_curry1":14}],16:[function(require,module,exports){
+},{"./_curry1":7}],9:[function(require,module,exports){
 var arity = require('../arity');
 
 
@@ -1190,7 +486,7 @@ module.exports = function _curryN(length, received, fn) {
   };
 };
 
-},{"../arity":12}],17:[function(require,module,exports){
+},{"../arity":5}],10:[function(require,module,exports){
 "use strict";
 
 var SVGNS = "http://www.w3.org/2000/svg";
@@ -1264,13 +560,13 @@ module.exports = {
   JSX: JSX 
 };
 
-},{}],18:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 module.exports = {
   array: Array.isArray,
   primitive: function(s) { return typeof s === 'string' || typeof s === 'number'; },
 };
 
-},{}],19:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 function updateClass(oldVnode, vnode) {
   var cur, name, elm = vnode.elm,
       oldClass = oldVnode.data.class || {},
@@ -1285,7 +581,7 @@ function updateClass(oldVnode, vnode) {
 
 module.exports = {create: updateClass, update: updateClass};
 
-},{}],20:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 var is = require('../is');
 
 function arrInvoker(arr) {
@@ -1328,7 +624,7 @@ function updateEventListeners(oldVnode, vnode) {
 
 module.exports = {create: updateEventListeners, update: updateEventListeners};
 
-},{"../is":18}],21:[function(require,module,exports){
+},{"../is":11}],14:[function(require,module,exports){
 function updateProps(oldVnode, vnode) {
   var key, cur, old, elm = vnode.elm,
       oldProps = oldVnode.data.props || {}, props = vnode.data.props || {};
@@ -1343,7 +639,7 @@ function updateProps(oldVnode, vnode) {
 
 module.exports = {create: updateProps, update: updateProps};
 
-},{}],22:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var raf = requestAnimationFrame || setTimeout;
 var nextFrame = function(fn) { raf(function() { raf(fn); }); };
 
@@ -1404,7 +700,7 @@ function applyRemoveStyle(vnode, rm) {
 
 module.exports = {create: updateStyle, update: updateStyle, destroy: applyDestroyStyle, remove: applyRemoveStyle};
 
-},{}],23:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 // jshint newcap: false
 /* global require, module, document, Element */
 'use strict';
@@ -1639,14 +935,14 @@ function init(modules) {
 
 module.exports = {init: init};
 
-},{"./is":18,"./vnode":24}],24:[function(require,module,exports){
+},{"./is":11,"./vnode":17}],17:[function(require,module,exports){
 module.exports = function(sel, data, children, text, elm) {
   var key = data === undefined ? undefined : data.key;
   return {sel: sel, data: data, children: children,
           text: text, elm: elm, key: key};
 };
 
-},{}],25:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var curryN = require('ramda/src/curryN');
 
 function isString(s) { return typeof s === 'string'; }
@@ -1716,4 +1012,4 @@ function Type(desc) {
 
 module.exports = Type;
 
-},{"ramda/src/curryN":13}]},{},[11]);
+},{"ramda/src/curryN":6}]},{},[4]);

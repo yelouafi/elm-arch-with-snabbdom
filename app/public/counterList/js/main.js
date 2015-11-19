@@ -3,7 +3,7 @@
 import { html } from 'snabbdom-jsx';
 import snabbdom from 'snabbdom';
 import { UpdateResult } from './UpdateResult';
-import App from './Login';
+import App from './CounterList';
 
 const patch = snabbdom.init([
   require('snabbdom/modules/class'),
@@ -38,9 +38,17 @@ function handleUpdateResult(updateResult) {
   }, updateResult);
 }
 
-export function dispatch(action) {
+function dispatch(action) {
   const updateResult = App.update(state, action);
   handleUpdateResult(updateResult);
 }
+
+function mapDispatcher(context) {
+  const newDisp = action => this(context(action));
+  newDisp.map = mapDispatcher;
+  return newDisp;
+}
+
+dispatch.map = mapDispatcher;
 
 handleUpdateResult(App.init());

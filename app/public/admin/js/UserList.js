@@ -4,7 +4,8 @@ import { html } from 'snabbdom-jsx';
 import Type from 'union-type';
 import UserForm from './UserForm';
 import Status from './RequestStatus';
-import { get, post } from './api';
+import { UpdateResult, pure, withEffects } from './UpdateResult';
+import api from './api';
 
 /*
   state: {
@@ -17,8 +18,14 @@ import { get, post } from './api';
 const Action = Type({
   Add             : [],
   Update          : [Number, UserForm.Action],
+  GetUsers        : [],
   GetUsersSuccess : [Array],
   GetUsersError   : [Object]
+});
+
+const Effect = Type({
+  GetUsers: [],
+  UserForm: [Number, UserForm.Effect]
 });
 
 function userDispatcher(id, dispatch) {
@@ -46,54 +53,91 @@ const statusMsg = Status.case({
   _       : () => ''
 });
 
-function init(dispatch) {
-  get('/api/list')
-  .then(Action.GetUsersSuccess, Action.GetUsersError)
-  .then(dispatch);
-
-  return { items: [], nextId: 1, status: Status.Pending() };
+function receiveUsers(state, users) {
+  const items = users.map( (user, idx) => ({ id: idx + 1, user }) );
+  return pure({
+    items,
+    nextId: items.length + 1,
+    status: Status.Success('')
+  });
 }
 
-function addUser(state) {
+function getUsers(dispatch) {
+  api.getUsers()
+  .then(Action.GetUsersSuccess, Action.GetUsersError)
+  .then(dispatch);
+}
+
+function addUserPure(state, user) {
   return {...state,
-    items: [...state.items, {
-      id: state.nextId,
-      user: UserForm.init()
-    }],
+    users: [...state.users, {id: state.nextId, user}],
     nextId: state.nextId + 1
   };
 }
 
-function updateUser(id, userState, userAction, dispatch) {
-  return UserForm.update(userState, userAction, userDispatcher(id, dispatch));
+function addUser(state) {
+  const result = UserForm.init();
+  return UpdateResult.case({
+    Pure : user => pure(addUserPure(state, user)),
+    WithEffects : (user, eff) => {
+      const state = addUserPure(state, user);
+      return withEffects(state, Effect.UserForm(state.nextId-1, eff));
+    }
+  }, result);
 }
 
-function updateUserList(state, id, userAction, dispatch) {
-  const items = state.items.map( item =>
-    id !== item.id ? item :
-                     {...item, user: updateUser(id, item.user, userAction, dispatch)});
-
-  return {...state, items };
-}
-
-function refreshUsers(state, users) {
-  return {
-    items   : users.map( (user, idx) => ({id: idx+1, user: UserForm.init(user)}) ),
-    nextId  : users.length + 1,
-    status  : Status.Success('')
+function updateUserPure(state, user, id) {
+  return {...state,
+    items: state.items.map(it => it.id !== id ? it : { id: it.id, user })
   };
 }
 
-function update(state, action, dispatch) {
+function updateUser(state, id, userAction) {
+  const item = state.items.find(it => it.id === id);
+  if(item) {
+    const result = UserForm.update(item.user, userAction);
+    return UpdateResult.case({
+      Pure : user => pure(updateUserPure(state, user, id)),
+      WithEffects : (user, eff) => {
+        const state = updateUserPure(state, user, id);
+        return withEffects(state, Effect.UserForm(id, eff));
+      }
+    }, result);
+  }
+  return pure(state);
+}
+
+const init = () =>
+    withEffects(
+      { nextId: 1, items: [], status: Status.Pending() },
+      Effect.GetUsers()
+    );
+
+function update(state, action) {
   return  Action.case({
-    Add             : () => addUser(state),
-    Update          : (id, userAction) => updateUserList(state, id, userAction, dispatch),
+    Add    : () => addUser(state),
+    Update : (id, userAction) => updateUser(state, id, userAction),
     // GetUsers Request Actions
-    GetUsersSuccess : users     => refreshUsers(state, users),
-    GetUsersError   : ({error}) => ({...state, status: Status.Error(error) })
+    GetUsers        : () => withEffects(
+                              {...state, status: Status.Pending()},
+                              Effect.GetUsers()
+                            ),
+    GetUsersSuccess : users => receiveUsers(state, users),
+    GetUsersError   : error => pure({...state, status: Status.Error(error) })
   }, action);
+}
+
+function execute(state, effect, dispatch) {
+  Effect.case({
+    GetUsers: () => getUsers(dispatch),
+    UserForm: (id, eff) => {
+      const item = state.items.find(it => it.id === id);
+      if(item)
+        UserForm.execute(item.user, eff, userDispatcher(dispatch, id))
+    }
+  }, effect);
 }
 
 
 
-export default { init, view, update, Action };
+export default { init, view, update, Action, execute, Effect };

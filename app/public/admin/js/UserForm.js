@@ -3,8 +3,8 @@
 import { html } from 'snabbdom-jsx';
 import Type from 'union-type';
 import Status from './RequestStatus';
-import { post } from './api';
-
+import { pure, withEffects } from './UpdateResult';
+import api from './api';
 /*
   state: {
   id      : Number, stored id
@@ -17,9 +17,13 @@ import { post } from './api';
 const Action = Type({
   Name        : [String],
   Password    : [String],
-  SaveStart   : [],
+  Save        : [],
   SaveSuccess : [Object], // {id}
   SaveError   : [Object]  // {error}
+});
+
+const Effect = Type({
+  Save: []
 });
 
 function onInput(dispatch, action) {
@@ -35,7 +39,11 @@ function onSubmit(dispatch) {
 }
 
 
-const view = ({state: {id, name, password, status}, dispatch}) =>
+const view = ({
+  state: { id, name, password, status },
+  dispatch
+}) =>
+
   <form on-submit={onSubmit(dispatch)}>
     <input
       type="text"
@@ -71,30 +79,38 @@ const statusMsg = Status.case({
 
 
 function init(user={name: '', password: ''}) {
-  return { ...user, status: Status.Empty() };
+  return pure({ ...user, status: Status.Empty() });
 }
 
 
 function save(state, dispatch) {
-  const url   = state.id ? '/admin/update' : '/api/add';
+  const save   = state.id ? api.addUser : api.updateUser;
   const data = {id: state.id, name: state.name, password: state.password};
-  post(url, data)
+  return save(data)
   .then(Action.SaveSuccess, Action.SaveError)
   .then(dispatch);
 
-  return { ...state, status: Status.Pending()};
 }
 
-function update(state, action, dispatch) {
+function update(state, action) {
   return  Action.case({
     // Input Actions
-    Name        : name      => ({ ...state, name }),
-    Password    : password  => ({ ...state, password }),
+    Name        : name      => pure({ ...state, name }),
+    Password    : password  => pure({ ...state, password }),
     // Save Request Actions
-    SaveStart   : ()        => save(state, dispatch),
-    SaveSuccess : ({id})    => ({ ...state, id, status: Status.Success(id)  }),
-    SaveError   : ({error}) => ({ ...state, status: Status.Error(error) })
+    Save : () => withEffects(
+                  { ...state, status: Status.Pending()},
+                  Effect.Save()
+                 ),
+    SaveSuccess : id => pure({ ...state, id, status: Status.Success(id)  }),
+    SaveError   : error => pure({ ...state, status: Status.Error(error) })
   }, action);
 }
 
-export default { init, view, update, Action };
+function execute(state, effect, dispatch) {
+  Effect.case({
+    Save: () => save(state, dispatch)
+  }, effect)
+}
+
+export default { view, init, update, Action, execute, Effect };

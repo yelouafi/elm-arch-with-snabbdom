@@ -2,7 +2,7 @@
 
 import { html } from 'snabbdom-jsx';
 import Type from 'union-type';
-import { pure, withEffects } from './updateResult';
+import { pure, withEffects } from './UpdateResult';
 
 const Action = Type({
   Increment      : [],
@@ -30,12 +30,8 @@ const update = (state, action) => Action.case({
   IncrementLater  : () => withEffects(state, Effect.IncrementAsync())
 }, action);
 
-function incrementAsync(dispatch) {
-  setTimeout(() => dispatch(Action.Increment()), 1000)
-}
-
 const execute = (state, effect, dispatch) => Effect.case({
-  IncrementAsync: () => incrementAsync(dispatch)
+  IncrementAsync: () => setTimeout(() => dispatch(Action.Increment()), 1000)
 }, effect);
 
-export default { view, init, update, execute, Action, Effect };
+export default { init, update, execute, view, Action, Effect };
