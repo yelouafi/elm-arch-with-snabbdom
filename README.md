@@ -5,8 +5,6 @@ Elm architecture examples with JavaScript/JSX using
 - babel: to enable ES2015 + JSX transpilation
 - browserify : for client side bundling
 
-# Getting up and running
-
 ##Setup
 
 - Install browserify `npm install -g browserify`.
