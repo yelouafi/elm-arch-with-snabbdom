@@ -15,7 +15,7 @@ Elm architecture examples with JavaScript/JSX using
 
 ##Examples
 
-The repository contains multiple different examples
+The repository contains some examples
 
 - Counter: a simple increment/decrement counter
 - Login: Demonstrates Asynchronous Actions in a single component
