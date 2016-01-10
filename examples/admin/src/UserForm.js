@@ -33,7 +33,7 @@ function onInput(dispatch, action) {
 function onSubmit(dispatch) {
   return e => {
     e.preventDefault();
-    dispatch(Action.SaveStart());
+    dispatch(Action.Save());
     return false;
   }
 }
@@ -59,7 +59,7 @@ const view = ({
 
     <button
       disabled={Status.isPending(status)}
-      on-click={[dispatch, Action.SaveStart()]}>
+      on-click={[dispatch, Action.Save]}>
         {id ? 'Update' : 'Add'}
     </button>
 

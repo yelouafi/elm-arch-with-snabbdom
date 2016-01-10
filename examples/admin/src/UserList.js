@@ -54,7 +54,7 @@ const statusMsg = Status.case({
 });
 
 function receiveUsers(state, users) {
-  const items = users.map( (user, idx) => ({ id: idx + 1, user }) );
+  const items = users.map( (user, idx) => ({ id: idx + 1, user: UserForm.init(user)[0] }) );
   return pure({
     items,
     nextId: items.length + 1,
@@ -75,8 +75,8 @@ function addUserPure(state, user) {
   };
 }
 
-function addUser(state) {
-  const result = UserForm.init();
+function addUser(state, userData) {
+  const result = UserForm.init(userData);
   return UpdateResult.case({
     Pure : user => pure(addUserPure(state, user)),
     WithEffects : (user, eff) => {

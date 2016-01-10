@@ -22,6 +22,7 @@ function updateUI() {
 }
 
 function updateStatePure(newState) {
+  //console.log(newState)
   state = newState;
   updateUI();
 }
